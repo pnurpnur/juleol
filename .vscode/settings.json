@@ -1,0 +1,56 @@
+{
+  // --- Editor basics ---
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // --- JavaScript / TypeScript / Next.js ---
+  "files.associations": {
+    "*.js": "javascript",
+    "*.ts": "typescript",
+    "*.tsx": "typescriptreact"
+  },
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "prettier.requireConfig": true,
+
+  // --- ESLint ---
+  "eslint.enable": true,
+  "eslint.run": "onSave",
+  "eslint.codeActionsOnSave.mode": "problems",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+
+  // --- Tailwind ---
+  "tailwindCSS.emmetCompletions": true,
+
+  // --- Go settings ---
+  "go.formatTool": "gofmt",
+  "go.lintTool": "golangci-lint",
+  "go.lintOnSave": "package",
+  "go.toolsManagement.autoUpdate": true,
+  "go.useLanguageServer": true,
+  "gopls": {
+    "analyses": {
+      "unusedparams": true,
+      "nilness": true,
+      "shadow": true
+    },
+    "staticcheck": true
+  },
+
+  // --- AI plugins (Copilot + Tabnine compatible) ---
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": true
+  },
+  "tabnine.experimentalAutoImports": true,
+
+  // --- UI preferences ---
+  "workbench.iconTheme": "material-icon-theme",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+}

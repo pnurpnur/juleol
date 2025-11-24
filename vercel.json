@@ -1,0 +1,9 @@
+{
+  "buildCommand": "",
+  "functions": {
+    "api/**/*.go": {
+      "runtime": "go1.x"
+    }
+  },
+  "ignoreCommand": "true"
+}
