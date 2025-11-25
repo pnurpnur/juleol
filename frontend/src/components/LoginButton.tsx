@@ -1,14 +1,16 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import styles from "./LoginButton.module.css";
 
 export default function LoginButton() {
   return (
     <button
       onClick={() => signIn("google")}
-      className="px-4 py-2 bg-blue-600 text-white rounded-md"
+      className={styles.googleButton}
     >
-      Logg inn med Google
+      <img src="/google-icon.png" alt="" className={styles.icon} />
+      <span>Logg inn med Google</span>
     </button>
   );
 }

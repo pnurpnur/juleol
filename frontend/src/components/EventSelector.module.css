@@ -1,0 +1,47 @@
+.container {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.select {
+  width: 100%;
+  padding: 0.7rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-size: 1rem;
+  color: #333;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  margin-bottom: 1.2rem;
+}
+
+/* Start + Result buttons */
+.startButton,
+.resultsButton {
+  width: 100%;
+  padding: 0.9rem;
+  border-radius: 0.5rem;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 0.8rem;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+.startButton {
+  background-color: #2f6c2f;
+}
+
+.startButton:hover {
+  background-color: #285a28;
+}
+
+.resultsButton {
+  background-color: #343434;
+}
+
+.resultsButton:hover {
+  background-color: #1d1d1d;
+}

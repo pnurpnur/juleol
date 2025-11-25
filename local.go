@@ -15,6 +15,7 @@ func main() {
     http.HandleFunc("/leaderboard", api.Leaderboard)
     http.HandleFunc("/create_event", api.CreateEvent)
     http.HandleFunc("/close_event", api.CloseEvent)
+	http.HandleFunc("/register_user", api.RegisterUser)
 
     log.Println("API running at http://localhost:3001")
     log.Fatal(http.ListenAndServe(":3001", nil))

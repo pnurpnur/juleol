@@ -1,0 +1,81 @@
+body {
+    margin: 0;
+}
+
+/* Hele siden */
+.pageBackground {
+  min-height: 100vh;
+  background-color: #8c8a6b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  color: #fff;
+}
+
+/* Større logo */
+.logo {
+  width: 200px;
+  height: auto;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+}
+
+/* Knapper */
+.button {
+  width: 100%;
+  max-width: 280px;
+  padding: 0.9rem 1rem;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+  display: block;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+.loginButton {
+  background-color: #2f6c2f;
+}
+
+.loginButton:hover {
+  background-color: #255825;
+}
+
+.logoutButton {
+  background-color: #b22121;
+}
+
+.logoutButton:hover {
+  background-color: #9a1c1c;
+}
+
+.resultsButton {
+  background-color: #343434;
+}
+
+.resultsButton:hover {
+  background-color: #1d1d1d;
+}
+
+/* Tekst */
+.sectionText {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.middleSection {
+  margin-top: 2rem;
+}
+
+.logoutWrapper {
+  margin-top: 2rem; /* litt luft under resultatknappen */
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}

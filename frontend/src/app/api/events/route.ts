@@ -1,16 +1,6 @@
-import { NextResponse } from "next/server";
+import { query } from "@/lib/db";
 
-const GO_API = process.env.NEXT_PUBLIC_API_BASE_URL!;
-
-export async function POST(req: Request) {
-  const body = await req.json();
-  console.log("➡️ Creating event via Go backend:", body);
-
-  const res = await fetch(`${GO_API}/create_event`, {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" }
-  });
-
-  return NextResponse.json(await res.json());
+export async function GET() {
+  const events = await query("SELECT id, name FROM events ORDER BY created_at DESC");
+  return Response.json(events);
 }

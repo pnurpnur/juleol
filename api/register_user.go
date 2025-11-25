@@ -1,6 +1,13 @@
+package api
+
+import (
+    "encoding/json"
+    "net/http"
+)
+
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
     if r.Method != "POST" {
-        http.Error(w, "POST required", 405)
+        http.Error(w, "Method not allowed", 405)
         return
     }
 
@@ -10,9 +17,13 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
         Email string `json:"email"`
     }
 
-    json.NewDecoder(r.Body).Decode(&u)
+    if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+        http.Error(w, err.Error(), 400)
+        return
+    }
 
     db, _ := DB()
+
     _, err := db.Exec(`
         INSERT INTO users (id, name, email)
         VALUES (?, ?, ?)
