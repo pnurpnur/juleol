@@ -1,3 +1,10 @@
+package api
+
+import (
+    "encoding/json"
+    "net/http"
+)
+
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
     if r.Method != "POST" {
         http.Error(w, "POST required", 405)
