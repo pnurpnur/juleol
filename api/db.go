@@ -12,7 +12,7 @@ import (
 
 func DB() (*sql.DB, error) {
     // 1. Load Aiven CA certificate
-    caCertPath := "aiven-ca.pem"
+    caCertPath := "api/aiven-ca.pem"
     caCert, err := os.ReadFile(caCertPath)
     if err != nil {
         return nil, fmt.Errorf("cannot read CA file: %w", err)
@@ -39,5 +39,15 @@ func DB() (*sql.DB, error) {
         os.Getenv("MYSQL_DATABASE"),
     )
 
-    return sql.Open("mysql", dsn)
+    db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+
 }
