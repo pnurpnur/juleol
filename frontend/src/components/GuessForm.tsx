@@ -1,148 +1,143 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import styles from "./GuessForm.module.css";
 
-export default function GuessForm({ eventId, userId }) {
-  const [beers, setBeers] = useState([]);
-  const [options, setOptions] = useState([]);
-  const [abvRanges, setAbvRanges] = useState([]);
-  const [types, setTypes] = useState([]);
+export default function GuessForm({
+  eventId,
+  beerId,
+  beerOptions,
+  abvRanges,
+  types,
+  initialGuess,
+  userId,
+  totalBeers
+}) {
+  const router = useRouter();
 
-  const [answers, setAnswers] = useState({});
+  const [form, setForm] = useState({
+    guessed_beer_option_id: initialGuess?.guessed_beer_option_id || "",
+    guessed_abv_range_id: initialGuess?.guessed_abv_range_id || "",
+    guessed_type_id: initialGuess?.guessed_type_id || "",
+    rating: initialGuess?.rating || 5,
+  });
 
-  useEffect(() => {
-    async function load() {
-      const b = await fetch(`/api/events/${eventId}/beers`).then(r => r.json());
-      const o = await fetch(`/api/events/${eventId}/beer-options`).then(r => r.json());
-      const a = await fetch(`/api/events/${eventId}/abv-options`).then(r => r.json());
-      const t = await fetch(`/api/types`).then(r => r.json());
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-      setBeers(b);
-      setOptions(o);
-      setAbvRanges(a);
-      setTypes(t);
-    }
-    load();
-  }, [eventId]);
+  // Auto-save with debounce
+  const save = useCallback(async () => {
+    setSaving(true);
+    setSaved(false);
 
-  function updateAnswer(beerId, field, value) {
-    setAnswers(prev => ({
-      ...prev,
-      [beerId]: { ...prev[beerId], [field]: value }
-    }));
-  }
-
-  async function submitBeer(beerId) {
-    const guess = answers[beerId];
-    if (!guess) return alert("Fyll ut skjemaet først!");
-
-    const payload = {
-      user_id: userId,
-      event_id: Number(eventId),
-      beer_id: beerId,
-      guessed_beer_option_id: Number(guess.guessed_beer),
-      guessed_abv_range_id: Number(guess.guessed_abv_range),
-      guessed_type_id: Number(guess.guessed_type),
-      rating: Number(guess.rating),
-    };
-
-    console.log("Submit:", payload);
-
-    const res = await fetch("/api/guesses", {
+    await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/submit_guess`, {
       method: "POST",
-      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        event_id: eventId,
+        beer_id: beerId,
+        ...form,
+      }),
     });
 
-    const data = await res.json();
-    alert("Registrert!");
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  }, [form, beerId, eventId, userId]);
+
+  // Debounce
+  useEffect(() => {
+    const t = setTimeout(() => {
+      save();
+    }, 800);
+
+    return () => clearTimeout(t);
+  }, [form, save]);
+
+  function update(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  if (!beers.length) return <div>Laster...</div>;
+  // Navigation
+  function goNext() {
+    if (beerId < totalBeers) {
+      router.push(`/event/${eventId}/beer/${beerId + 1}`);
+    }
+  }
+
+  function goPrev() {
+    if (beerId > 1) {
+      router.push(`/event/${eventId}/beer/${beerId - 1}`);
+    }
+  }
 
   return (
-    <div className="p-6 space-y-12">
-      <h1 className="text-2xl font-bold">Juleølsmaking</h1>
+    <div className={styles.wrapper}>
 
-      {beers.map((beer, index) => (
-        <div key={beer.id} className="p-4 border rounded-lg space-y-4">
-          <h2 className="text-xl font-semibold">Øl #{index + 1}</h2>
+      <h2 className={styles.title}>Øl {beerId} av {totalBeers}</h2>
 
-          {/* Guess beer */}
-          <div>
-            <label className="block font-medium mb-1">Hvilken øl?</label>
-            <select
-              className="border p-2 rounded w-full"
-              onChange={e =>
-                updateAnswer(beer.id, "guessed_beer", e.target.value)
-              }
-            >
-              <option value="">Velg øl</option>
-              {options.map(opt => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.name}
-                </option>
-              ))}
-            </select>
-          </div>
+      {saving && <div className={styles.saving}>Lagrer...</div>}
+      {saved && <div className={styles.saved}>Lagret ✓</div>}
 
-          {/* ABV */}
-          <div>
-            <label className="block font-medium mb-1">Styrke</label>
-            <select
-              className="border p-2 rounded w-full"
-              onChange={e =>
-                updateAnswer(beer.id, "guessed_abv_range", e.target.value)
-              }
-            >
-              <option value="">Velg styrke</option>
-              {abvRanges.map(r => (
-                <option key={r.id} value={r.id}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-          </div>
+      <label className={styles.label}>Hvilken øl tror du det er?</label>
+      <select
+        value={form.guessed_beer_option_id}
+        onChange={(e) => update("guessed_beer_option_id", e.target.value)}
+        className={styles.select}
+      >
+        <option value="">Velg øl</option>
+        {beerOptions.map((o) => (
+          <option key={o.id} value={o.id}>{o.name}</option>
+        ))}
+      </select>
 
-          {/* Type */}
-          <div>
-            <label className="block font-medium mb-1">Type</label>
-            <select
-              className="border p-2 rounded w-full"
-              onChange={e =>
-                updateAnswer(beer.id, "guessed_type", e.target.value)
-              }
-            >
-              <option value="">Velg type</option>
-              {types.map(t => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
+      <label className={styles.label}>Hvilken styrke?</label>
+      <select
+        value={form.guessed_abv_range_id}
+        onChange={(e) => update("guessed_abv_range_id", e.target.value)}
+        className={styles.select}
+      >
+        <option value="">Velg styrke</option>
+        {abvRanges.map((a) => (
+          <option key={a.id} value={a.id}>{a.label}</option>
+        ))}
+      </select>
 
-          {/* Rating */}
-          <div>
-            <label className="block font-medium mb-1">Karakter (1–10)</label>
-            <input
-              type="number"
-              min="1"
-              max="10"
-              className="border p-2 rounded w-full"
-              onChange={e =>
-                updateAnswer(beer.id, "rating", e.target.value)
-              }
-            />
-          </div>
+      <label className={styles.label}>Hvilken type øl?</label>
+      <select
+        value={form.guessed_type_id}
+        onChange={(e) => update("guessed_type_id", e.target.value)}
+        className={styles.select}
+      >
+        <option value="">Velg type</option>
+        {types.map((t) => (
+          <option key={t.id} value={t.id}>{t.name}</option>
+        ))}
+      </select>
 
-          <button
-            onClick={() => submitBeer(beer.id)}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Send inn for denne ølen
-          </button>
-        </div>
-      ))}
+      <label className={styles.label}>Hvor godt likte du den?</label>
+      <input
+        type="range"
+        min="1"
+        max="10"
+        value={form.rating}
+        onChange={(e) => update("rating", Number(e.target.value))}
+        className={styles.slider}
+      />
+
+      <div className={styles.ratingValue}>{form.rating}/10</div>
+
+      <div className={styles.navButtons}>
+        {beerId > 1 && (
+          <button onClick={goPrev} className={styles.navButton}>← Forrige</button>
+        )}
+        {beerId < totalBeers && (
+          <button onClick={goNext} className={styles.navButton}>Neste →</button>
+        )}
+      </div>
+
     </div>
   );
 }
