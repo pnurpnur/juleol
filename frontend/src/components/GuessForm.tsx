@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
 import styles from "./GuessForm.module.css";
-import { submitGuess, submitRating } from "@/lib/api";
 
 export default function GuessForm({
   eventId,
@@ -16,96 +14,118 @@ export default function GuessForm({
   userId,
   totalBeers
 }) {
-  const router = useRouter();
-
-  // ------------------------------------------------------------
-  // FORM STATE
-  // ------------------------------------------------------------
-  const [form, setForm] = useState({
-    guessed_beer_option_id: initialGuess?.guessed_beer_option_id || "",
-    guessed_abv_range_id: initialGuess?.guessed_abv_range_id || "",
-    guessed_type_id: initialGuess?.guessed_type_id || "",
-    rating: initialRating?.rating ?? 5,
-    untappd_score: initialRating?.untappd_score ?? ""
+  //
+  // ----- Initial Form State -----
+  //
+  const [guessForm, setGuessForm] = useState({
+    guessed_beer_option_id: initialGuess?.guessedBeerOptionId || "",
+    guessed_abv_range_id: initialGuess?.guessedAbvRangeId || "",
+    guessed_type_id: initialGuess?.guessedTypeId || "",
   });
 
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [ratingForm, setRatingForm] = useState({
+    rating: initialRating?.rating ?? 5,
+    untappd_score: initialRating?.untappdScore ?? "",
+  });
 
-  // ------------------------------------------------------------
-  // SAVE (debounced)
-  // ------------------------------------------------------------
-  const save = useCallback(async () => {
-    setSaving(true);
-    setSaved(false);
+  //
+  // ----- Save states -----
+  //
+  const [guessSaving, setGuessSaving] = useState(false);
+  const [guessSaved, setGuessSaved] = useState(false);
 
-    try {
-      // save guess
-      await submitGuess({
+  const [ratingSaving, setRatingSaving] = useState(false);
+  const [ratingSaved, setRatingSaved] = useState(false);
+
+  //
+  // ----- Save Guess -----
+  //
+  const saveGuess = useCallback(async () => {
+    setGuessSaving(true);
+    setGuessSaved(false);
+
+    await fetch("/api/guess", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         event_id: eventId,
         beer_id: beerId,
-        guessed_beer_option_id: form.guessed_beer_option_id || null,
-        guessed_abv_range_id: form.guessed_abv_range_id || null,
-        guessed_type_id: form.guessed_type_id || null,
-      });
+        user_id: userId,
+        ...guessForm,
+      }),
+    });
 
-      // save rating
-      await submitRating({
+    setGuessSaving(false);
+    setGuessSaved(true);
+    setTimeout(() => setGuessSaved(false), 1500);
+  }, [guessForm, eventId, beerId, userId]);
+
+  //
+  // ----- Save Rating -----
+  //
+  const saveRating = useCallback(async () => {
+    setRatingSaving(true);
+    setRatingSaved(false);
+
+    await fetch("/api/rating", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         event_id: eventId,
         beer_id: beerId,
-        rating: form.rating,
-        untappd_score: form.untappd_score === "" ? null : Number(form.untappd_score),
-      });
-    } catch (err) {
-      console.error("Save error", err);
-    }
+        user_id: userId,
+        ...ratingForm,
+      }),
+    });
 
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
-  }, [form, eventId, beerId]);
+    setRatingSaving(false);
+    setRatingSaved(true);
+    setTimeout(() => setRatingSaved(false), 1500);
+  }, [ratingForm, eventId, beerId, userId]);
 
-  // Debounce 800ms
+  //
+  // ----- Debounce both -----
+  //
   useEffect(() => {
-    const t = setTimeout(save, 800);
+    const t = setTimeout(saveGuess, 500);
     return () => clearTimeout(t);
-  }, [form, save]);
+  }, [guessForm, saveGuess]);
 
-  function update(field, value) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  useEffect(() => {
+    const t = setTimeout(saveRating, 500);
+    return () => clearTimeout(t);
+  }, [ratingForm, saveRating]);
+
+  //
+  // ----- Update Helper -----
+  //
+  function updateGuess(key, value) {
+    setGuessForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  // ------------------------------------------------------------
-  // NAVIGATION
-  // ------------------------------------------------------------
-  function goNext() {
-    if (beerId < totalBeers) {
-      router.push(`/event/${eventId}/beer/${beerId + 1}`);
-    }
+  function updateRating(key, value) {
+    setRatingForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function goPrev() {
-    if (beerId > 1) {
-      router.push(`/event/${eventId}/beer/${beerId - 1}`);
-    }
-  }
-
-  // ------------------------------------------------------------
-  // RENDER
-  // ------------------------------------------------------------
+  //
+  // ----- UI -----
+  //
   return (
     <div className={styles.wrapper}>
-
       <h2 className={styles.title}>Øl {beerId} av {totalBeers}</h2>
 
-      {saving && <div className={styles.saving}>Lagrer...</div>}
-      {saved && <div className={styles.saved}>Lagret ✓</div>}
+      {/* Saving indicators */}
+      {guessSaving && <div className={styles.saving}>Lagrer gjetning…</div>}
+      {guessSaved && <div className={styles.saved}>Gjetning lagret ✓</div>}
 
-      {/* GUESS: ØL */}
+      {ratingSaving && <div className={styles.saving}>Lagrer rating…</div>}
+      {ratingSaved && <div className={styles.saved}>Rating lagret ✓</div>}
+
+      {/* GUESS SECTION */}
       <label className={styles.label}>Hvilken øl tror du det er?</label>
       <select
-        value={form.guessed_beer_option_id}
-        onChange={(e) => update("guessed_beer_option_id", e.target.value)}
+        value={guessForm.guessed_beer_option_id}
+        onChange={(e) => updateGuess("guessed_beer_option_id", Number(e.target.value))}
         className={styles.select}
       >
         <option value="">Velg øl</option>
@@ -114,11 +134,10 @@ export default function GuessForm({
         ))}
       </select>
 
-      {/* GUESS: ABV */}
       <label className={styles.label}>Hvilken styrke?</label>
       <select
-        value={form.guessed_abv_range_id}
-        onChange={(e) => update("guessed_abv_range_id", e.target.value)}
+        value={guessForm.guessed_abv_range_id}
+        onChange={(e) => updateGuess("guessed_abv_range_id", Number(e.target.value))}
         className={styles.select}
       >
         <option value="">Velg styrke</option>
@@ -127,11 +146,10 @@ export default function GuessForm({
         ))}
       </select>
 
-      {/* GUESS: TYPE */}
       <label className={styles.label}>Hvilken type øl?</label>
       <select
-        value={form.guessed_type_id}
-        onChange={(e) => update("guessed_type_id", e.target.value)}
+        value={guessForm.guessed_type_id}
+        onChange={(e) => updateGuess("guessed_type_id", Number(e.target.value))}
         className={styles.select}
       >
         <option value="">Velg type</option>
@@ -140,41 +158,29 @@ export default function GuessForm({
         ))}
       </select>
 
-      {/* RATING */}
+      {/* RATING SECTION */}
       <label className={styles.label}>Hvor godt likte du den?</label>
       <input
         type="range"
         min="1"
         max="10"
-        value={form.rating}
-        onChange={(e) => update("rating", Number(e.target.value))}
+        value={ratingForm.rating}
+        onChange={(e) => updateRating("rating", Number(e.target.value))}
         className={styles.slider}
       />
-      <div className={styles.ratingValue}>{form.rating}/10</div>
+      <div className={styles.ratingValue}>{ratingForm.rating}/10</div>
 
-      {/* UNTAPPD SCORE */}
-      <label className={styles.label}>Untappd-score (valgfritt 0–5)</label>
+      <label className={styles.label}>Untappd score (valgfri 0–5)</label>
       <input
         type="number"
-        step="0.01"
         min="0"
         max="5"
-        value={form.untappd_score}
-        onChange={(e) => update("untappd_score", e.target.value)}
-        className={styles.select}
-        placeholder="F.eks 3.75"
+        step="0.1"
+        value={ratingForm.untappd_score}
+        onChange={(e) => updateRating("untappd_score", e.target.value)}
+        className={styles.input}
+        placeholder="Eks: 3.75"
       />
-
-      {/* NAV */}
-      <div className={styles.navButtons}>
-        {beerId > 1 && (
-          <button onClick={goPrev} className={styles.navButton}>← Forrige</button>
-        )}
-        {beerId < totalBeers && (
-          <button onClick={goNext} className={styles.navButton}>Neste →</button>
-        )}
-      </div>
-
     </div>
   );
 }

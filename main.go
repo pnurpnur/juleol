@@ -5,40 +5,64 @@ import (
     "net/http"
     "os"
 
-    // API-pakkene dine
-    "juleol/api" // ← endre hvis mappestrukturen din er annerledes
+    "juleol/api"
 )
 
 func main() {
-    log.Println("Starting Juleøl server...")
+    log.Println("🚀 Starting Juleøl backend (PRODUCTION MODE)...")
 
-    // 🔧 Les PORT fra Railway eller bruk fallback
+    //
+    // ----------- Setup PORT ----------
+    //
     port := os.Getenv("PORT")
     if port == "" {
-        port = "3001"
-        log.Println("PORT not set, using default:", port)
+        port = "3001" // fallback for lokal docker kjøring
+        log.Println("⚠️  PORT not set, defaulting to :3001")
     }
 
-    // 🔧 Test database connection
+    //
+    // ----------- Test DB Connection ----------
+    //
     db, err := api.DB()
     if err != nil {
-        log.Fatal("Database connection failed:", err)
+        log.Fatal("❌ Database connection failed:", err)
     }
     defer db.Close()
-    log.Println("Database connected successfully.")
 
-    // 🔥 API ROUTES
+    log.Println("🟢 Connected to database")
+
+    //
+    // ----------- API ROUTES -----------
+    //
+
+    // Guessing
     http.HandleFunc("/submit_guess", api.SubmitGuess)
-    http.HandleFunc("/register_user", api.RegisterUser)
+    http.HandleFunc("/get_guess", api.GetGuess)
+    http.HandleFunc("/guesses", api.GetGuesses)
+
+    // Rating
+    http.HandleFunc("/submit_rating", api.SubmitRating)
+    http.HandleFunc("/get_rating", api.GetRating)
+    http.HandleFunc("/get_ratings", api.GetRatings)
+
+    // Event data
     http.HandleFunc("/events", api.ListEvents)
-    http.HandleFunc("/event_abv_ranges", api.EventABVRanges)
     http.HandleFunc("/event_beer_options", api.EventBeerOptions)
+    http.HandleFunc("/event_abv_ranges", api.EventABVRanges)
     http.HandleFunc("/types", api.BeerTypes)
+
+    // Users
+    http.HandleFunc("/register_user", api.RegisterUser)
+
+    // Health check
     http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
         w.Write([]byte("ok"))
     })
 
-    // 🚀 Start server
-    log.Println("Server running on port:", port)
-    log.Fatal(http.ListenAndServe(":"+port, nil))
+    //
+    // ----------- START SERVER -----------
+    //
+
+    log.Printf("📡 Listening on :%s\n", port)
+    log.Fatal(http.ListenAndServe("0.0.0.0:"+port, nil))
 }

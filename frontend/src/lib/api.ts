@@ -1,61 +1,123 @@
 // src/lib/api.ts
 
-export async function apiGet(path: string) {
-  const res = await fetch(path, { credentials: "include" });
-  if (!res.ok) throw new Error(await res.text());
+///////////////////////////////////////////////////////////////
+// Fetch helpers
+///////////////////////////////////////////////////////////////
+
+async function apiGet(url: string) {
+  const res = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`GET ${url} failed: ${text}`);
+  }
+
   return res.json();
 }
 
-export async function apiPost(path: string, body: any) {
-  const res = await fetch(path, {
+async function apiPost(url: string, body: any) {
+  const res = await fetch(url, {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(await res.text());
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`POST ${url} failed: ${text}`);
+  }
+
   return res.json();
 }
 
-/* -------------------------------------------------------------
-   GUESSES
-------------------------------------------------------------- */
+///////////////////////////////////////////////////////////////
+// Event list
+///////////////////////////////////////////////////////////////
+
+export function getEvents() {
+  return apiGet("/api/events");
+}
+
+export function getEventBeerOptions(eventId: number) {
+  return apiGet(`/api/events/${eventId}/beer-options`);
+}
+
+export function getEventABVRanges(eventId: number) {
+  return apiGet(`/api/events/${eventId}/abv-options`);
+}
+
+export function getTypes() {
+  return apiGet("/api/types");
+}
+
+///////////////////////////////////////////////////////////////
+// Guessing
+///////////////////////////////////////////////////////////////
+
+export function getGuess(eventId: number, beerId: number, userId: string) {
+  return apiGet(
+    `/api/guess?event_id=${eventId}&beer_id=${beerId}&user_id=${userId}`
+  );
+}
+
+export function getGuesses(eventId: number, userId: string) {
+  return apiGet(`/api/guesses?event_id=${eventId}&user_id=${userId}`);
+}
 
 export function submitGuess(data: {
   event_id: number;
   beer_id: number;
+  user_id: string;
   guessed_beer_option_id?: number | null;
   guessed_abv_range_id?: number | null;
   guessed_type_id?: number | null;
 }) {
-  return apiPost("/api/guess", data);
+  return apiPost(`/api/guess`, data);
 }
 
-export function fetchGuess(eventId: number, beerId: number) {
-  return apiGet(`/api/guess?event_id=${eventId}&beer_id=${beerId}`);
+///////////////////////////////////////////////////////////////
+// Ratings
+///////////////////////////////////////////////////////////////
+
+export function getRating(eventId: number, beerId: number, userId: string) {
+  return apiGet(
+    `/api/rating?event_id=${eventId}&beer_id=${beerId}&user_id=${userId}`
+  );
 }
 
-export function fetchGuesses(eventId: number) {
-  return apiGet(`/api/guesses?event_id=${eventId}`);
+export function getRatings(eventId: number) {
+  return apiGet(`/api/ratings?event_id=${eventId}`);
 }
-
-/* -------------------------------------------------------------
-   RATINGS
-------------------------------------------------------------- */
 
 export function submitRating(data: {
   event_id: number;
   beer_id: number;
+  user_id: string;
   rating: number;
   untappd_score?: number | null;
 }) {
-  return apiPost("/api/rating", data);
+  return apiPost(`/api/rating`, data);
 }
 
-export function fetchRating(eventId: number, beerId: number) {
-  return apiGet(`/api/rating?event_id=${eventId}&beer_id=${beerId}`);
+///////////////////////////////////////////////////////////////
+// Admin actions
+///////////////////////////////////////////////////////////////
+
+export function closeEvent(eventId: number) {
+  return apiPost("/api/close-event", { event_id: eventId });
 }
 
-export function fetchRatings(eventId: number) {
-  return apiGet(`/api/ratings?event_id=${eventId}`);
+///////////////////////////////////////////////////////////////
+// Test/debug utilities
+///////////////////////////////////////////////////////////////
+
+export function testDB() {
+  return apiGet("/api/test-db");
+}
+
+export function testEnv() {
+  return apiGet("/api/test-env");
 }

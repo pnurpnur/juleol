@@ -1,9 +1,5 @@
-import { NextResponse } from "next/server";
-
 export async function GET() {
-  return NextResponse.json({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    passwordSet: !!process.env.MYSQL_PASSWORD
+  return Response.json({
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   });
 }

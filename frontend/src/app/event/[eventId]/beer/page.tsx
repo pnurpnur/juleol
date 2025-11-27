@@ -1,49 +1,60 @@
-import { auth } from "@/auth";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useEventWithBeers } from "@/lib/hooks/useEventWithBeers";
 import GuessForm from "@/components/GuessForm";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { fetchGuess, fetchRating } from "@/lib/api"; // våre frontend helpers
 
-export default async function BeerPage({ params }: { params: { eventId: string; beerNumber: string } }) {
-  const session = await auth();
-  if (!session) redirect("/");
+export default function BeerPage({ params }: { params: { eventId: string; beerNumber: string } }) {
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const { eventId, beerNumber } = params;
+  // Auth må kjøres i klienten her, siden hooken krever userId
+  useEffect(() => {
+    auth().then((session) => {
+      if (!session) {
+        redirect("/");
+        return;
+      }
+      setUserId(session.user.id);
+    });
+  }, []);
 
-  const api = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!userId) {
+    return <div>Laster bruker...</div>;
+  }
 
-  // Hent event-spesifikke valg (fra Go-backenden)
-  const [beerOptionsRes, abvRes, typesRes] = await Promise.all([
-    fetch(`${api}/event_beer_options?event_id=${eventId}`, { cache: "no-store" }),
-    fetch(`${api}/event_abv_ranges?event_id=${eventId}`, { cache: "no-store" }),
-    fetch(`${api}/types`, { cache: "no-store" }),
-  ]);
+  const eventId = Number(params.eventId);
+  const beerId = Number(params.beerNumber);
 
-  const [beerOptions, abvRanges, types] = await Promise.all([
-    beerOptionsRes.json(),
-    abvRes.json(),
-    typesRes.json(),
-  ]);
+  const {
+    beerOptions,
+    abvRanges,
+    types,
+    guess,
+    rating,
+    loading,
+    error,
+  } = useEventWithBeers(eventId, beerId, userId);
 
-  // Hent gjett og rating fra vår egen Next-API (ikke direkte backend-endepunkt)
-  const [guess, rating] = await Promise.all([
-    fetchGuess(Number(eventId), Number(beerNumber)),
-    fetchRating(Number(eventId), Number(beerNumber)),
-  ]);
+  if (loading) return <div>Laster data...</div>;
+  if (error) return <div>Feil: {error.message}</div>;
+
+  if (!beerOptions || !abvRanges || !types) {
+    return <div>Mangler data.</div>;
+  }
 
   return (
-    <div>
-      {/* GuessForm er din gamle komponent */}
-      <GuessForm
-        eventId={Number(eventId)}
-        beerId={Number(beerNumber)}
-        beerOptions={beerOptions}
-        abvRanges={abvRanges}
-        types={types}
-        initialGuess={guess}
-        userId={session.user.id}
-        totalBeers={12}
-        initialRating={rating} // NYTT!
-      />
-    </div>
+    <GuessForm
+      eventId={eventId}
+      beerId={beerId}
+      beerOptions={beerOptions}
+      abvRanges={abvRanges}
+      types={types}
+      initialGuess={guess}
+      initialRating={rating}
+      userId={userId}
+      totalBeers={12} // evt. dynamisk senere
+    />
   );
 }
