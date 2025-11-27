@@ -1,53 +1,70 @@
 package api
 
 import (
-    "crypto/tls"
-    "crypto/x509"
     "database/sql"
     "fmt"
+    "log"
     "os"
+    "strings"
 
-    "github.com/go-sql-driver/mysql"
+    _ "github.com/go-sql-driver/mysql"
 )
 
+var dbInstance *sql.DB
+
 func DB() (*sql.DB, error) {
-    // 1. Load Aiven CA certificate
-    caCertPath := "api/aiven-ca.pem"
-    caCert, err := os.ReadFile(caCertPath)
-    if err != nil {
-        return nil, fmt.Errorf("cannot read CA file: %w", err)
+    if dbInstance != nil {
+        return dbInstance, nil
     }
 
-    rootCertPool := x509.NewCertPool()
-    rootCertPool.AppendCertsFromPEM(caCert)
-
-    // 2. Register TLS config
-    err = mysql.RegisterTLSConfig("aiven", &tls.Config{
-        RootCAs: rootCertPool,
-    })
-    if err != nil {
-        return nil, fmt.Errorf("cannot register TLS: %w", err)
+    dsn := os.Getenv("DATABASE_URL")
+    if dsn == "" {
+        return nil, fmt.Errorf("Missing environment variable DATABASE_URL")
     }
 
-    // 3. Build DSN
-    dsn := fmt.Sprintf(
-        "%s:%s@tcp(%s:%s)/%s?parseTime=true&tls=aiven",
-        os.Getenv("MYSQL_USER"),
-        os.Getenv("MYSQL_PASSWORD"),
-        os.Getenv("MYSQL_HOST"),
-        os.Getenv("MYSQL_PORT"),
-        os.Getenv("MYSQL_DATABASE"),
-    )
+    // Railway gives URL format: mysql://user:pass@host:port/db
+    // mysql driver needs:        user:pass@tcp(host:port)/db?parseTime=true
+    if strings.HasPrefix(dsn, "mysql://") {
+        dsn = strings.TrimPrefix(dsn, "mysql://")
+
+        // Split on @ → left: user:pass, right: host:port/db
+        parts := strings.SplitN(dsn, "@", 2)
+        if len(parts) != 2 {
+            return nil, fmt.Errorf("Invalid DATABASE_URL format")
+        }
+
+        userPass := parts[0]
+        hostPart := parts[1]
+
+        // Replace first "/" with ")/"
+        idx := strings.Index(hostPart, "/")
+        if idx == -1 {
+            return nil, fmt.Errorf("Invalid DATABASE_URL (missing '/')")
+        }
+
+        host := hostPart[:idx]
+        dbname := hostPart[idx+1:]
+
+        // Convert to Go MySQL DSN
+        dsn = fmt.Sprintf("%s@tcp(%s)/%s?parseTime=true", userPass, host, dbname)
+    } else {
+        // If user already provides DSN in correct format
+        if !strings.Contains(dsn, "parseTime") {
+            dsn += "?parseTime=true"
+        }
+    }
+
+    log.Println("Connecting to DB:", dsn)
 
     db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return nil, err
-	}
+    if err != nil {
+        return nil, err
+    }
 
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
+    if err := db.Ping(); err != nil {
+        return nil, err
+    }
 
-	return db, nil
-
+    dbInstance = db
+    return dbInstance, nil
 }
