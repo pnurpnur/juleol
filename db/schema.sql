@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS beers (
 
 -- GUESSES (Svar levert av deltaker)
 CREATE TABLE IF NOT EXISTS guesses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
     event_id INT NOT NULL,
     user_id VARCHAR(64) NOT NULL,
     beer_id INT NOT NULL,
@@ -54,9 +53,10 @@ CREATE TABLE IF NOT EXISTS guesses (
     guessed_beer_option_id INT,
     guessed_abv_range_id INT,
     guessed_type_id INT,
-    rating INT,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (event_id, user_id, beer_id),
 
     FOREIGN KEY (event_id) REFERENCES events(id),
     FOREIGN KEY (user_id) REFERENCES users(id),
@@ -64,6 +64,24 @@ CREATE TABLE IF NOT EXISTS guesses (
     FOREIGN KEY (guessed_beer_option_id) REFERENCES beer_options(id),
     FOREIGN KEY (guessed_abv_range_id) REFERENCES abv_ranges(id),
     FOREIGN KEY (guessed_type_id) REFERENCES beer_types(id)
+);
+
+-- RATINGS (Svar levert av deltaker)
+CREATE TABLE IF NOT EXISTS ratings (
+    event_id INT NOT NULL,
+    user_id VARCHAR(64) NOT NULL,
+    beer_id INT NOT NULL,
+
+    rating INT NOT NULL,
+    untappd_score DECIMAL(2,1) DEFAULT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (event_id, user_id, beer_id),
+
+    FOREIGN KEY (event_id) REFERENCES events(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (beer_id) REFERENCES beers(id),
 );
 
 CREATE TABLE event_beer_options (

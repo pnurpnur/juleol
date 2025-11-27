@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./GuessForm.module.css";
+import { submitGuess, submitRating } from "@/lib/api";
 
 export default function GuessForm({
   eventId,
@@ -11,48 +12,62 @@ export default function GuessForm({
   abvRanges,
   types,
   initialGuess,
+  initialRating,
   userId,
   totalBeers
 }) {
   const router = useRouter();
 
+  // ------------------------------------------------------------
+  // FORM STATE
+  // ------------------------------------------------------------
   const [form, setForm] = useState({
     guessed_beer_option_id: initialGuess?.guessed_beer_option_id || "",
     guessed_abv_range_id: initialGuess?.guessed_abv_range_id || "",
     guessed_type_id: initialGuess?.guessed_type_id || "",
-    rating: initialGuess?.rating || 5,
+    rating: initialRating?.rating ?? 5,
+    untappd_score: initialRating?.untappd_score ?? ""
   });
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Auto-save with debounce
+  // ------------------------------------------------------------
+  // SAVE (debounced)
+  // ------------------------------------------------------------
   const save = useCallback(async () => {
     setSaving(true);
     setSaved(false);
 
-    await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/submit_guess`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
+    try {
+      // save guess
+      await submitGuess({
         event_id: eventId,
         beer_id: beerId,
-        ...form,
-      }),
-    });
+        guessed_beer_option_id: form.guessed_beer_option_id || null,
+        guessed_abv_range_id: form.guessed_abv_range_id || null,
+        guessed_type_id: form.guessed_type_id || null,
+      });
+
+      // save rating
+      await submitRating({
+        event_id: eventId,
+        beer_id: beerId,
+        rating: form.rating,
+        untappd_score: form.untappd_score === "" ? null : Number(form.untappd_score),
+      });
+    } catch (err) {
+      console.error("Save error", err);
+    }
 
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
-  }, [form, beerId, eventId, userId]);
+  }, [form, eventId, beerId]);
 
-  // Debounce
+  // Debounce 800ms
   useEffect(() => {
-    const t = setTimeout(() => {
-      save();
-    }, 800);
-
+    const t = setTimeout(save, 800);
     return () => clearTimeout(t);
   }, [form, save]);
 
@@ -60,7 +75,9 @@ export default function GuessForm({
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  // Navigation
+  // ------------------------------------------------------------
+  // NAVIGATION
+  // ------------------------------------------------------------
   function goNext() {
     if (beerId < totalBeers) {
       router.push(`/event/${eventId}/beer/${beerId + 1}`);
@@ -73,6 +90,9 @@ export default function GuessForm({
     }
   }
 
+  // ------------------------------------------------------------
+  // RENDER
+  // ------------------------------------------------------------
   return (
     <div className={styles.wrapper}>
 
@@ -81,6 +101,7 @@ export default function GuessForm({
       {saving && <div className={styles.saving}>Lagrer...</div>}
       {saved && <div className={styles.saved}>Lagret ✓</div>}
 
+      {/* GUESS: ØL */}
       <label className={styles.label}>Hvilken øl tror du det er?</label>
       <select
         value={form.guessed_beer_option_id}
@@ -93,6 +114,7 @@ export default function GuessForm({
         ))}
       </select>
 
+      {/* GUESS: ABV */}
       <label className={styles.label}>Hvilken styrke?</label>
       <select
         value={form.guessed_abv_range_id}
@@ -105,6 +127,7 @@ export default function GuessForm({
         ))}
       </select>
 
+      {/* GUESS: TYPE */}
       <label className={styles.label}>Hvilken type øl?</label>
       <select
         value={form.guessed_type_id}
@@ -117,6 +140,7 @@ export default function GuessForm({
         ))}
       </select>
 
+      {/* RATING */}
       <label className={styles.label}>Hvor godt likte du den?</label>
       <input
         type="range"
@@ -126,9 +150,22 @@ export default function GuessForm({
         onChange={(e) => update("rating", Number(e.target.value))}
         className={styles.slider}
       />
-
       <div className={styles.ratingValue}>{form.rating}/10</div>
 
+      {/* UNTAPPD SCORE */}
+      <label className={styles.label}>Untappd-score (valgfritt 0–5)</label>
+      <input
+        type="number"
+        step="0.01"
+        min="0"
+        max="5"
+        value={form.untappd_score}
+        onChange={(e) => update("untappd_score", e.target.value)}
+        className={styles.select}
+        placeholder="F.eks 3.75"
+      />
+
+      {/* NAV */}
       <div className={styles.navButtons}>
         {beerId > 1 && (
           <button onClick={goPrev} className={styles.navButton}>← Forrige</button>
