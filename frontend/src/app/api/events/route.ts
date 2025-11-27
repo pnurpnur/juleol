@@ -1,6 +1,15 @@
-import { query } from "@/lib/db";
-
 export async function GET() {
-  const events = await query("SELECT id, name FROM events ORDER BY created_at DESC");
-  return Response.json(events);
+  const api = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const res = await fetch(`${api}/events`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    return new Response("Upstream API error", { status: res.status });
+  }
+
+  const data = await res.json();
+  return Response.json(data);
 }
