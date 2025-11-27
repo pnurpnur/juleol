@@ -22,7 +22,8 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    all := []Rating{}
+    ratings := []Rating{}
+
     for rows.Next() {
         var rr Rating
         var up *float64
@@ -35,9 +36,10 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
             &up,
             &rr.CreatedAt,
         )
+
         rr.UntappdScore = up
-        all = append(all, rr)
+        ratings = append(ratings, rr)
     }
 
-    json.NewEncoder(w).Encode(all)
+    json.NewEncoder(w).Encode(ratings)
 }

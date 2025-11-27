@@ -7,14 +7,10 @@ import (
 
 func GetGuesses(w http.ResponseWriter, r *http.Request) {
     eventID := r.URL.Query().Get("event_id")
-
-    userID, err := AuthUserID(r)
-    if err != nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+    userID := r.URL.Query().Get("user_id")
 
     db, _ := DB()
+
     rows, err := db.Query(`
         SELECT event_id, user_id, beer_id,
                guessed_beer_option_id,
@@ -24,6 +20,7 @@ func GetGuesses(w http.ResponseWriter, r *http.Request) {
         FROM guesses
         WHERE event_id = ? AND user_id = ?
     `, eventID, userID)
+
     if err != nil {
         http.Error(w, "DB error", 500)
         return
@@ -47,7 +44,6 @@ func GetGuesses(w http.ResponseWriter, r *http.Request) {
         g.GuessedBeerOptionID = optID
         g.GuessedABVRangeID = abvID
         g.GuessedTypeID = typeID
-
         guesses = append(guesses, g)
     }
 

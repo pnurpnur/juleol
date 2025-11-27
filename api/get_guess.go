@@ -8,12 +8,7 @@ import (
 func GetGuess(w http.ResponseWriter, r *http.Request) {
     eventID := r.URL.Query().Get("event_id")
     beerID := r.URL.Query().Get("beer_id")
-
-    userID, err := AuthUserID(r)
-    if err != nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+    userID := r.URL.Query().Get("user_id")
 
     db, _ := DB()
 
@@ -30,7 +25,7 @@ func GetGuess(w http.ResponseWriter, r *http.Request) {
     var g Guess
     var optID, abvID, typeID *int
 
-    err = row.Scan(
+    err := row.Scan(
         &g.EventID,
         &g.UserID,
         &g.BeerID,

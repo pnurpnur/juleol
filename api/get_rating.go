@@ -8,12 +8,7 @@ import (
 func GetRating(w http.ResponseWriter, r *http.Request) {
     eventID := r.URL.Query().Get("event_id")
     beerID := r.URL.Query().Get("beer_id")
-
-    userID, err := AuthUserID(r)
-    if err != nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+    userID := r.URL.Query().Get("user_id")
 
     db, _ := DB()
 
@@ -24,23 +19,23 @@ func GetRating(w http.ResponseWriter, r *http.Request) {
         WHERE event_id = ? AND beer_id = ? AND user_id = ?
     `, eventID, beerID, userID)
 
-    var rOut Rating
+    var rr Rating
     var up *float64
 
-    err = row.Scan(
-        &rOut.EventID,
-        &rOut.UserID,
-        &rOut.BeerID,
-        &rOut.Rating,
+    err := row.Scan(
+        &rr.EventID,
+        &rr.UserID,
+        &rr.BeerID,
+        &rr.Rating,
         &up,
-        &rOut.CreatedAt,
+        &rr.CreatedAt,
     )
     if err != nil {
         http.Error(w, "Rating not found", http.StatusNotFound)
         return
     }
 
-    rOut.UntappdScore = up
+    rr.UntappdScore = up
 
-    json.NewEncoder(w).Encode(rOut)
+    json.NewEncoder(w).Encode(rr)
 }

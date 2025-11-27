@@ -6,25 +6,26 @@ import (
     "net/http"
 )
 
+type GuessInput struct {
+    EventID             int     `json:"event_id"`
+    UserID              string  `json:"user_id"`
+    BeerID              int     `json:"beer_id"`
+    GuessedBeerOptionID *int    `json:"guessed_beer_option_id"`
+    GuessedABVRangeID   *int    `json:"guessed_abv_range_id"`
+    GuessedTypeID       *int    `json:"guessed_type_id"`
+}
+
 func SubmitGuess(w http.ResponseWriter, r *http.Request) {
     if r.Method != "POST" {
         http.Error(w, "POST required", http.StatusMethodNotAllowed)
         return
     }
 
-    userID, err := AuthUserID(r)
-    if err != nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
-
-    var g Guess
+    var g GuessInput
     if err := json.NewDecoder(r.Body).Decode(&g); err != nil {
         http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
         return
     }
-
-    g.UserID = userID
 
     db, err := DB()
     if err != nil {
@@ -32,27 +33,26 @@ func SubmitGuess(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // 1. Sjekk at event er åpent
+    // 1. Event må finnes og være åpent
     var isOpen bool
-    err = db.QueryRow(`SELECT is_open FROM events WHERE id = ?`, g.EventID).
-        Scan(&isOpen)
+    err = db.QueryRow(`SELECT is_open FROM events WHERE id = ?`, g.EventID).Scan(&isOpen)
     if err != nil {
         http.Error(w, "Event not found", http.StatusNotFound)
         return
     }
     if !isOpen {
-        http.Error(w, "Event closed", http.StatusForbidden)
+        http.Error(w, "Event is closed", http.StatusForbidden)
         return
     }
 
-    // 2. Sjekk at beer tilhører event
-    var evID int
-    err = db.QueryRow(`SELECT event_id FROM beers WHERE id = ?`, g.BeerID).Scan(&evID)
+    // 2. Beer må tilhøre eventet
+    var actualEventID int
+    err = db.QueryRow(`SELECT event_id FROM beers WHERE id = ?`, g.BeerID).Scan(&actualEventID)
     if err != nil {
         http.Error(w, "Beer not found", http.StatusNotFound)
         return
     }
-    if evID != g.EventID {
+    if actualEventID != g.EventID {
         http.Error(w, "Beer does not belong to event", http.StatusBadRequest)
         return
     }
@@ -78,9 +78,10 @@ func SubmitGuess(w http.ResponseWriter, r *http.Request) {
         g.GuessedABVRangeID,
         g.GuessedTypeID,
     )
+
     if err != nil {
         log.Println("SQL ERROR:", err)
-        http.Error(w, "SQL error", http.StatusInternalServerError)
+        http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
 
