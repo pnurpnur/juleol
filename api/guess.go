@@ -1,3 +1,5 @@
+package api
+
 type Guess struct {
     EventID             int     `json:"event_id"`
     UserID              string  `json:"user_id"`

@@ -1,3 +1,5 @@
+package api
+
 type Rating struct {
     EventID      int        `json:"event_id"`
     UserID       string     `json:"user_id"`
