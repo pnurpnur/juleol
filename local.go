@@ -1,39 +1,65 @@
 //go:build local
+
 package main
 
 import (
     "log"
     "net/http"
 
-	"github.com/joho/godotenv"
-    // API-pakkene dine
-    "juleol/api" // ← endre hvis mappestrukturen din er annerledes
+    "github.com/joho/godotenv"
+
+    "juleol/api"
 )
 
 func main() {
-    godotenv.Load(".env.local")
-	log.Println("Starting Juleøl server...")
+    // Load env file
+    if err := godotenv.Load(".env.local"); err != nil {
+        log.Println("⚠️  .env.local ikke funnet – bruker systemvariabler")
+    } else {
+        log.Println("📄 Lastet .env.local")
+    }
 
-    // 🔧 Test database connection
+    log.Println("🚀 Starter Juleøl-server (LOCAL MODE) ...")
+
+    // Test DB
     db, err := api.DB()
     if err != nil {
-        log.Fatal("Database connection failed:", err)
+        log.Fatal("❌ Klarte ikke koble til database:", err)
     }
     defer db.Close()
-    log.Println("Database connected successfully.")
 
-    // 🔥 API ROUTES
+    log.Println("🟢 Database connection OK")
+
+    //
+    // ---------------- API ROUTES ----------------
+    //
+
+    // GUESS
     http.HandleFunc("/submit_guess", api.SubmitGuess)
-    http.HandleFunc("/register_user", api.RegisterUser)
+    http.HandleFunc("/get_guess", api.GetGuess)
+
+    // RATING
+    http.HandleFunc("/submit_rating", api.SubmitRating)
+    http.HandleFunc("/get_rating", api.GetRating)
+
+    // EVENT DATA
     http.HandleFunc("/events", api.ListEvents)
-    http.HandleFunc("/event_abv_ranges", api.EventABVRanges)
     http.HandleFunc("/event_beer_options", api.EventBeerOptions)
+    http.HandleFunc("/event_abv_ranges", api.EventABVRanges)
     http.HandleFunc("/types", api.BeerTypes)
+
+    // USERS
+    http.HandleFunc("/register_user", api.RegisterUser)
+
+    // HEALTH CHECK
     http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
         w.Write([]byte("ok"))
     })
 
-    // 🚀 Start server
-    log.Println("API running at http://localhost:3001")
+    //
+    // ---------------- START SERVER ----------------
+    //
+
+    log.Println("📡 API lytter på http://localhost:3001")
     log.Fatal(http.ListenAndServe(":3001", nil))
 }

@@ -38,12 +38,10 @@ func main() {
     // Guessing
     http.HandleFunc("/submit_guess", api.SubmitGuess)
     http.HandleFunc("/get_guess", api.GetGuess)
-    http.HandleFunc("/guesses", api.GetGuesses)
 
     // Rating
     http.HandleFunc("/submit_rating", api.SubmitRating)
     http.HandleFunc("/get_rating", api.GetRating)
-    http.HandleFunc("/get_ratings", api.GetRatings)
 
     // Event data
     http.HandleFunc("/events", api.ListEvents)
