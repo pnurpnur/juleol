@@ -7,7 +7,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const res = await fetch(`${api}/close_event`, {
+    const res = await fetch(`${api}/create_event`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -15,14 +15,14 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       const text = await res.text();
-      console.error("Backend close_event error:", text);
+      console.error("Backend create_event error:", text);
       return new Response(text, { status: res.status });
     }
 
     return new Response(await res.text(), { status: 200 });
 
   } catch (err: any) {
-    console.error("Error in /api/close-event:", err);
+    console.error("Error in /api/create-event:", err);
     return new Response("Server error", { status: 500 });
   }
 }

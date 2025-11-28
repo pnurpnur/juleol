@@ -1,7 +1,20 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./GuessForm.module.css";
+
+interface GuessFormProps {
+  eventId: number;
+  beerId: number;
+  beerOptions: { id: number; name: string }[];
+  abvRanges: { id: number; label: string }[];
+  types: { id: number; name: string }[];
+  initialGuess?: any;
+  initialRating?: any;
+  userId: string;
+  totalBeers: number;
+}
 
 export default function GuessForm({
   eventId,
@@ -12,175 +25,219 @@ export default function GuessForm({
   initialGuess,
   initialRating,
   userId,
-  totalBeers
-}) {
-  //
-  // ----- Initial Form State -----
-  //
-  const [guessForm, setGuessForm] = useState({
-    guessed_beer_option_id: initialGuess?.guessedBeerOptionId || "",
-    guessed_abv_range_id: initialGuess?.guessedAbvRangeId || "",
-    guessed_type_id: initialGuess?.guessedTypeId || "",
+  totalBeers,
+}: GuessFormProps) {
+  const router = useRouter();
+
+  const [form, setForm] = useState({
+    guessed_beer_option_id: "",
+    guessed_abv_range_id: "",
+    guessed_type_id: "",
+    rating: 5,
+    untappd_score: "",
   });
 
-  const [ratingForm, setRatingForm] = useState({
-    rating: initialRating?.rating ?? 5,
-    untappd_score: initialRating?.untappdScore ?? "",
-  });
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  //
-  // ----- Save states -----
-  //
-  const [guessSaving, setGuessSaving] = useState(false);
-  const [guessSaved, setGuessSaved] = useState(false);
-
-  const [ratingSaving, setRatingSaving] = useState(false);
-  const [ratingSaved, setRatingSaved] = useState(false);
-
-  //
-  // ----- Save Guess -----
-  //
-  const saveGuess = useCallback(async () => {
-    setGuessSaving(true);
-    setGuessSaved(false);
-
-    await fetch("/api/guess", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        event_id: eventId,
-        beer_id: beerId,
-        user_id: userId,
-        ...guessForm,
-      }),
-    });
-
-    setGuessSaving(false);
-    setGuessSaved(true);
-    setTimeout(() => setGuessSaved(false), 1500);
-  }, [guessForm, eventId, beerId, userId]);
-
-  //
-  // ----- Save Rating -----
-  //
-  const saveRating = useCallback(async () => {
-    setRatingSaving(true);
-    setRatingSaved(false);
-
-    await fetch("/api/rating", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        event_id: eventId,
-        beer_id: beerId,
-        user_id: userId,
-        ...ratingForm,
-      }),
-    });
-
-    setRatingSaving(false);
-    setRatingSaved(true);
-    setTimeout(() => setRatingSaved(false), 1500);
-  }, [ratingForm, eventId, beerId, userId]);
-
-  //
-  // ----- Debounce both -----
-  //
+  /////////////////////////////////////////////////////////////
+  // Initialize form safely with camelCase & snake_case support
+  /////////////////////////////////////////////////////////////
   useEffect(() => {
-    const t = setTimeout(saveGuess, 500);
-    return () => clearTimeout(t);
-  }, [guessForm, saveGuess]);
+    setForm((prev) => ({
+      guessed_beer_option_id:
+        initialGuess?.guessedBeerOptionId ??
+        initialGuess?.guessed_beer_option_id ??
+        prev.guessed_beer_option_id ??
+        "",
+      guessed_abv_range_id:
+        initialGuess?.guessedAbvRangeId ??
+        initialGuess?.guessed_abv_range_id ??
+        prev.guessed_abv_range_id ??
+        "",
+      guessed_type_id:
+        initialGuess?.guessedTypeId ??
+        initialGuess?.guessed_type_id ??
+        prev.guessed_type_id ??
+        "",
+      rating:
+        initialRating?.rating ??
+        initialRating?.score ??
+        prev.rating ??
+        5,
+      untappd_score:
+        initialRating?.untappdScore ??
+        initialRating?.untappd_score ??
+        prev.untappd_score ??
+        "",
+    }));
+    setIsInitialized(true);
+  }, [beerId, initialGuess, initialRating]);
+
+  /////////////////////////////////////////////////////////////
+  // Update form state
+  /////////////////////////////////////////////////////////////
+  const update = (field: string, value: any) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: field === "rating" ? Number(value) : value,
+    }));
+  };
+
+  /////////////////////////////////////////////////////////////
+  // Autosave
+  /////////////////////////////////////////////////////////////
+  const save = useCallback(async () => {
+    if (!isInitialized) return;
+    setSaving(true);
+    setSaved(false);
+
+    try {
+      // Save guess
+      await fetch(`/api/events/${eventId}/beer/${beerId}/guess?user_id=${userId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          guessed_beer_option_id:
+            form.guessed_beer_option_id === "" ? null : Number(form.guessed_beer_option_id),
+          guessed_abv_range_id:
+            form.guessed_abv_range_id === "" ? null : Number(form.guessed_abv_range_id),
+          guessed_type_id:
+            form.guessed_type_id === "" ? null : Number(form.guessed_type_id),
+        }),
+      });
+
+      // Save rating
+      await fetch(`/api/events/${eventId}/beer/${beerId}/rating?user_id=${userId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          rating: form.rating,
+          untappd_score: form.untappd_score === "" ? null : Number(form.untappd_score),
+        }),
+      });
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+    } catch (err) {
+      console.error("Autosave error:", err);
+    } finally {
+      setSaving(false);
+    }
+  }, [form, eventId, beerId, userId, isInitialized]);
 
   useEffect(() => {
-    const t = setTimeout(saveRating, 500);
+    if (!isInitialized) return;
+    const t = setTimeout(() => save(), 800);
     return () => clearTimeout(t);
-  }, [ratingForm, saveRating]);
+  }, [form, save, isInitialized]);
 
-  //
-  // ----- Update Helper -----
-  //
-  function updateGuess(key, value) {
-    setGuessForm((prev) => ({ ...prev, [key]: value }));
-  }
+  /////////////////////////////////////////////////////////////
+  // Navigation
+  /////////////////////////////////////////////////////////////
+  const nextBeer = () => {
+    if (beerId < totalBeers) router.push(`/event/${eventId}/beer/${beerId + 1}`);
+  };
 
-  function updateRating(key, value) {
-    setRatingForm((prev) => ({ ...prev, [key]: value }));
-  }
+  const prevBeer = () => {
+    if (beerId > 1) router.push(`/event/${eventId}/beer/${beerId - 1}`);
+  };
 
-  //
-  // ----- UI -----
-  //
+  /////////////////////////////////////////////////////////////
+  // Render
+  /////////////////////////////////////////////////////////////
   return (
     <div className={styles.wrapper}>
-      <h2 className={styles.title}>Øl {beerId} av {totalBeers}</h2>
+      <h2 className={styles.title}>
+        Øl {beerId} av {totalBeers}
+      </h2>
 
-      {/* Saving indicators */}
-      {guessSaving && <div className={styles.saving}>Lagrer gjetning…</div>}
-      {guessSaved && <div className={styles.saved}>Gjetning lagret ✓</div>}
+      {saving && <div className={styles.saving}>Lagrer…</div>}
+      {saved && <div className={styles.saved}>Lagret ✓</div>}
 
-      {ratingSaving && <div className={styles.saving}>Lagrer rating…</div>}
-      {ratingSaved && <div className={styles.saved}>Rating lagret ✓</div>}
-
-      {/* GUESS SECTION */}
+      {/* Guess: Beer */}
       <label className={styles.label}>Hvilken øl tror du det er?</label>
       <select
-        value={guessForm.guessed_beer_option_id}
-        onChange={(e) => updateGuess("guessed_beer_option_id", Number(e.target.value))}
+        value={form.guessed_beer_option_id}
+        onChange={(e) => update("guessed_beer_option_id", e.target.value)}
         className={styles.select}
       >
         <option value="">Velg øl</option>
         {beerOptions.map((o) => (
-          <option key={o.id} value={o.id}>{o.name}</option>
+          <option key={o.id} value={String(o.id)}>
+            {o.name}
+          </option>
         ))}
       </select>
 
-      <label className={styles.label}>Hvilken styrke?</label>
+      {/* Guess: ABV */}
       <select
-        value={guessForm.guessed_abv_range_id}
-        onChange={(e) => updateGuess("guessed_abv_range_id", Number(e.target.value))}
+        value={form.guessed_abv_range_id}
+        onChange={(e) => update("guessed_abv_range_id", e.target.value)}
         className={styles.select}
       >
         <option value="">Velg styrke</option>
         {abvRanges.map((a) => (
-          <option key={a.id} value={a.id}>{a.label}</option>
+          <option key={a.id} value={String(a.id)}>
+            {a.label}
+          </option>
         ))}
       </select>
 
-      <label className={styles.label}>Hvilken type øl?</label>
+      {/* Guess: Type */}
       <select
-        value={guessForm.guessed_type_id}
-        onChange={(e) => updateGuess("guessed_type_id", Number(e.target.value))}
+        value={form.guessed_type_id}
+        onChange={(e) => update("guessed_type_id", e.target.value)}
         className={styles.select}
       >
         <option value="">Velg type</option>
         {types.map((t) => (
-          <option key={t.id} value={t.id}>{t.name}</option>
+          <option key={t.id} value={String(t.id)}>
+            {t.name}
+          </option>
         ))}
       </select>
 
-      {/* RATING SECTION */}
-      <label className={styles.label}>Hvor godt likte du den?</label>
+      {/* Rating */}
+      <label className={styles.label}>Din rating</label>
       <input
         type="range"
         min="1"
         max="10"
-        value={ratingForm.rating}
-        onChange={(e) => updateRating("rating", Number(e.target.value))}
+        value={form.rating}
+        onChange={(e) => update("rating", e.target.value)}
         className={styles.slider}
       />
-      <div className={styles.ratingValue}>{ratingForm.rating}/10</div>
+      <div className={styles.ratingValue}>{form.rating}/10</div>
 
-      <label className={styles.label}>Untappd score (valgfri 0–5)</label>
+      {/* Untappd */}
+      <label className={styles.label}>Untappd score (valgfritt)</label>
       <input
         type="number"
         min="0"
         max="5"
-        step="0.1"
-        value={ratingForm.untappd_score}
-        onChange={(e) => updateRating("untappd_score", e.target.value)}
+        step="0.25"
+        value={form.untappd_score}
+        onChange={(e) => update("untappd_score", e.target.value)}
         className={styles.input}
-        placeholder="Eks: 3.75"
       />
+
+      {/* Navigation */}
+      <div className={styles.navButtons}>
+        {beerId > 1 && (
+          <button onClick={prevBeer} className={styles.navButton}>
+            ← Forrige
+          </button>
+        )}
+        {beerId < totalBeers && (
+          <button onClick={nextBeer} className={styles.navButton}>
+            Neste →
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,3 @@
-// src/lib/api.ts
-
 ///////////////////////////////////////////////////////////////
 // Fetch helpers
 ///////////////////////////////////////////////////////////////
@@ -34,7 +32,7 @@ async function apiPost(url: string, body: any) {
 }
 
 ///////////////////////////////////////////////////////////////
-// Event list
+// Events
 ///////////////////////////////////////////////////////////////
 
 export function getEvents() {
@@ -54,19 +52,17 @@ export function getTypes() {
 }
 
 ///////////////////////////////////////////////////////////////
-// Guessing
+// Guessing (new nested API)
 ///////////////////////////////////////////////////////////////
 
+// GET one guess
 export function getGuess(eventId: number, beerId: number, userId: string) {
   return apiGet(
-    `/api/guess?event_id=${eventId}&beer_id=${beerId}&user_id=${userId}`
+    `/api/events/${eventId}/beer/${beerId}/guess?user_id=${userId}`
   );
 }
 
-export function getGuesses(eventId: number, userId: string) {
-  return apiGet(`/api/guesses?event_id=${eventId}&user_id=${userId}`);
-}
-
+// POST create/update guess
 export function submitGuess(data: {
   event_id: number;
   beer_id: number;
@@ -75,21 +71,22 @@ export function submitGuess(data: {
   guessed_abv_range_id?: number | null;
   guessed_type_id?: number | null;
 }) {
-  return apiPost(`/api/guess`, data);
+  const { event_id, beer_id, ...payload } = data;
+
+  return apiPost(
+    `/api/events/${event_id}/beer/${beer_id}/guess?user_id=${data.user_id}`,
+    payload
+  );
 }
 
 ///////////////////////////////////////////////////////////////
-// Ratings
+// Ratings (new nested API)
 ///////////////////////////////////////////////////////////////
 
 export function getRating(eventId: number, beerId: number, userId: string) {
   return apiGet(
-    `/api/rating?event_id=${eventId}&beer_id=${beerId}&user_id=${userId}`
+    `/api/events/${eventId}/beer/${beerId}/rating?user_id=${userId}`
   );
-}
-
-export function getRatings(eventId: number) {
-  return apiGet(`/api/ratings?event_id=${eventId}`);
 }
 
 export function submitRating(data: {
@@ -99,19 +96,28 @@ export function submitRating(data: {
   rating: number;
   untappd_score?: number | null;
 }) {
-  return apiPost(`/api/rating`, data);
+  const { event_id, beer_id, ...payload } = data;
+
+  return apiPost(
+    `/api/events/${event_id}/beer/${beer_id}/rating?user_id=${data.user_id}`,
+    payload
+  );
 }
 
 ///////////////////////////////////////////////////////////////
-// Admin actions
+// Admin
 ///////////////////////////////////////////////////////////////
 
-export function closeEvent(eventId: number) {
-  return apiPost("/api/close-event", { event_id: eventId });
+export function createEvent(name: string, userId: string) {
+  return apiPost("/api/create-event", { name, user_id: userId });
+}
+
+export function closeEvent(eventId: number, userId: string) {
+  return apiPost("/api/close-event", { event_id: eventId, user_id: userId });
 }
 
 ///////////////////////////////////////////////////////////////
-// Test/debug utilities
+// Test utilities
 ///////////////////////////////////////////////////////////////
 
 export function testDB() {

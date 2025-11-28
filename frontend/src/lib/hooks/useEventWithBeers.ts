@@ -1,78 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
-import {
-  getEventBeerOptions,
-  getEventABVRanges,
-  getTypes,
-  getGuess,
-  getRating,
-} from "../api";
-
-import {
-  BeerOption,
-  ABVRange,
-  BeerType,
-  Guess,
-  Rating,
-} from "@/types";
-
-interface EventWithBeersResult {
-  beerOptions: BeerOption[] | null;
-  abvRanges: ABVRange[] | null;
-  types: BeerType[] | null;
-  guess: Guess | null;
-  rating: Rating | null;
-  loading: boolean;
-  error: any;
-}
-
-export function useEventWithBeers(
-  eventId: number,
-  beerId: number,
-  userId: string
-): EventWithBeersResult {
-  const [beerOptions, setBeerOptions] = useState<BeerOption[] | null>(null);
-  const [abvRanges, setABVRanges] = useState<ABVRange[] | null>(null);
-  const [types, setTypes] = useState<BeerType[] | null>(null);
-  const [guess, setGuess] = useState<Guess | null>(null);
-  const [rating, setRating] = useState<Rating | null>(null);
+export function useEventWithBeers(eventId, beerId, userId) {
+  const [beerOptions, setBeerOptions] = useState([]);
+  const [abvRanges, setAbvRanges] = useState([]);
+  const [types, setTypes] = useState([]);
+  const [guess, setGuess] = useState(null);
+  const [rating, setRating] = useState(null);
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!eventId || !beerId || !userId) return;
+    async function load() {
+      try {
+        const [optRes, abvRes, typeRes, guessRes, ratingRes] =
+          await Promise.all([
+            fetch(`/api/events/${eventId}/beer-options`),
+            fetch(`/api/events/${eventId}/abv-options`),
+            fetch(`/api/types`),
+            fetch(
+              `/api/events/${eventId}/beer/${beerId}/guess?user_id=${userId}`
+            ),
+            fetch(
+              `/api/events/${eventId}/beer/${beerId}/rating?user_id=${userId}`
+            ),
+          ]);
 
-    setLoading(true);
-    setError(null);
+        setBeerOptions(await optRes.json());
+        setAbvRanges(await abvRes.json());
+        setTypes(await typeRes.json());
 
-    Promise.all([
-      getEventBeerOptions(eventId),
-      getEventABVRanges(eventId),
-      getTypes(),
-      getGuess(eventId, beerId, userId),
-      getRating(eventId, beerId, userId),
-    ])
-      .then(([opts, abv, typesData, guessData, ratingData]) => {
-        setBeerOptions(opts);
-        setABVRanges(abv);
-        setTypes(typesData);
-        setGuess(guessData);
-        setRating(ratingData);
-      })
-      .catch((err) => setError(err))
-      .finally(() => setLoading(false));
+        setGuess(guessRes.ok ? await guessRes.json() : null);
+        setRating(ratingRes.ok ? await ratingRes.json() : null);
+
+        setLoading(false);
+      } catch (err) {
+        setError(err);
+        setLoading(false);
+      }
+    }
+
+    load();
   }, [eventId, beerId, userId]);
 
-  return {
-    beerOptions,
-    abvRanges,
-    types,
-    guess,
-    rating,
-    loading,
-    error,
-  };
+  return { beerOptions, abvRanges, types, guess, rating, loading, error };
 }

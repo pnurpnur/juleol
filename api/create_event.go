@@ -23,19 +23,17 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    res, err := db.Exec(`
+    _, err = db.Exec(`
         INSERT INTO events (name, owner_id, is_open)
         VALUES (?, ?, TRUE)
-    `, req.Name, req.OwnerID)
+    `, req.Name, req.UserID)
+
     if err != nil {
         http.Error(w, err.Error(), 500)
         return
     }
 
-    id, _ := res.LastInsertId()
-
-    json.NewEncoder(w).Encode(map[string]any{
-        "status":   "ok",
-        "event_id": id,
+    json.NewEncoder(w).Encode(map[string]string{
+        "status": "created",
     })
 }
