@@ -1,20 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./GuessForm.module.css";
-
-interface GuessFormProps {
-  eventId: number;
-  beerId: number;
-  beerOptions: { id: number; name: string }[];
-  abvRanges: { id: number; label: string }[];
-  types: { id: number; name: string }[];
-  initialGuess?: any;
-  initialRating?: any;
-  userId: string;
-  totalBeers: number;
-}
 
 export default function GuessForm({
   eventId,
@@ -26,8 +14,12 @@ export default function GuessForm({
   initialRating,
   userId,
   totalBeers,
-}: GuessFormProps) {
+}) {
   const router = useRouter();
+
+  /////////////////////////////////////////////////////////////
+  // Internal form state
+  /////////////////////////////////////////////////////////////
 
   const [form, setForm] = useState({
     guessed_beer_option_id: "",
@@ -37,65 +29,84 @@ export default function GuessForm({
     untappd_score: "",
   });
 
+  // Track if we're currently loading initial data
   const [isInitialized, setIsInitialized] = useState(false);
+
+  /////////////////////////////////////////////////////////////
+  // Initialize form when initialGuess / initialRating arrives
+  /////////////////////////////////////////////////////////////
+
+  useLayoutEffect(() => {
+    // Exit if there's nothing to load yet
+    if (!initialGuess && !initialRating) return;
+
+    console.log("GuessForm init:", { initialGuess, initialRating, beerOptions });
+
+    // Accept both camelCase and snake_case shapes from props (guesses)
+    const guessedBeerOptionId =
+      initialGuess?.guessedBeerOptionId ?? initialGuess?.guessed_beer_option_id ?? null;
+    const guessedAbvRangeId =
+      initialGuess?.guessedAbvRangeId ?? initialGuess?.guessed_abv_range_id ?? null;
+    const guessedTypeId =
+      initialGuess?.guessedTypeId ?? initialGuess?.guessed_type_id ?? null;
+
+    // Accept both camelCase and snake_case for rating payload
+    const loadedRating =
+      initialRating?.rating ?? initialRating?.score ?? null;
+    const loadedUntappd =
+      initialRating?.untappdScore ?? initialRating?.untappd_score ?? "";
+
+    // set synchronously so inputs/selects render with the loaded values
+    setForm({
+      guessed_beer_option_id: guessedBeerOptionId != null ? String(guessedBeerOptionId) : "",
+      guessed_abv_range_id: guessedAbvRangeId != null ? String(guessedAbvRangeId) : "",
+      guessed_type_id: guessedTypeId != null ? String(guessedTypeId) : "",
+      // ensure rating is numeric in-state
+      rating: loadedRating != null ? Number(loadedRating) : 5,
+      untappd_score: loadedUntappd !== null ? String(loadedUntappd) : "",
+    });
+
+    setIsInitialized(true);
+  }, [
+    beerId,
+    initialGuess ?? null,
+    (initialRating?.rating ?? initialRating?.score ?? null),
+    beerOptions ? beerOptions.length : 0,
+  ]);
+
+  /////////////////////////////////////////////////////////////
+  // Updates
+  /////////////////////////////////////////////////////////////
+
+  const numericFields = [
+    "rating",
+  ];
+
+  function update(field: string, value: any) {
+    setForm((prev) => ({
+      ...prev,
+      // keep select fields as strings; only rating is numeric in-state
+      [field]: field === "rating" ? Number(value) : value,
+    }));
+  }
+
+  /////////////////////////////////////////////////////////////
+  // Autosave logic
+  /////////////////////////////////////////////////////////////
+
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  /////////////////////////////////////////////////////////////
-  // Initialize form safely with camelCase & snake_case support
-  /////////////////////////////////////////////////////////////
-  useEffect(() => {
-    setForm((prev) => ({
-      guessed_beer_option_id:
-        initialGuess?.guessedBeerOptionId ??
-        initialGuess?.guessed_beer_option_id ??
-        prev.guessed_beer_option_id ??
-        "",
-      guessed_abv_range_id:
-        initialGuess?.guessedAbvRangeId ??
-        initialGuess?.guessed_abv_range_id ??
-        prev.guessed_abv_range_id ??
-        "",
-      guessed_type_id:
-        initialGuess?.guessedTypeId ??
-        initialGuess?.guessed_type_id ??
-        prev.guessed_type_id ??
-        "",
-      rating:
-        initialRating?.rating ??
-        initialRating?.score ??
-        prev.rating ??
-        5,
-      untappd_score:
-        initialRating?.untappdScore ??
-        initialRating?.untappd_score ??
-        prev.untappd_score ??
-        "",
-    }));
-    setIsInitialized(true);
-  }, [beerId, initialGuess, initialRating]);
-
-  /////////////////////////////////////////////////////////////
-  // Update form state
-  /////////////////////////////////////////////////////////////
-  const update = (field: string, value: any) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: field === "rating" ? Number(value) : value,
-    }));
-  };
-
-  /////////////////////////////////////////////////////////////
-  // Autosave
-  /////////////////////////////////////////////////////////////
   const save = useCallback(async () => {
-    if (!isInitialized) return;
     setSaving(true);
     setSaved(false);
 
-    try {
-      // Save guess
-      await fetch(`/api/events/${eventId}/beer/${beerId}/guess?user_id=${userId}`, {
+    //---------------------------------------------------------
+    // Save Guess
+    //---------------------------------------------------------
+    await fetch(
+      `/api/events/${eventId}/beer/${beerId}/guess?user_id=${userId}`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -107,30 +118,36 @@ export default function GuessForm({
           guessed_type_id:
             form.guessed_type_id === "" ? null : Number(form.guessed_type_id),
         }),
-      });
+      }
+    );
 
-      // Save rating
-      await fetch(`/api/events/${eventId}/beer/${beerId}/rating?user_id=${userId}`, {
+    //---------------------------------------------------------
+    // Save Rating
+    //---------------------------------------------------------
+    await fetch(
+      `/api/events/${eventId}/beer/${beerId}/rating?user_id=${userId}`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: userId,
           rating: form.rating,
-          untappd_score: form.untappd_score === "" ? null : Number(form.untappd_score),
+          untappd_score:
+            form.untappd_score === "" ? null : Number(form.untappd_score),
         }),
-      });
+      }
+    );
 
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1500);
-    } catch (err) {
-      console.error("Autosave error:", err);
-    } finally {
-      setSaving(false);
-    }
-  }, [form, eventId, beerId, userId, isInitialized]);
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  }, [form, eventId, beerId, userId]);
 
+  // Skip autosave if form still has default/empty values
   useEffect(() => {
     if (!isInitialized) return;
+    if (form.rating === 5 && form.guessed_beer_option_id === "") return;
+
     const t = setTimeout(() => save(), 800);
     return () => clearTimeout(t);
   }, [form, save, isInitialized]);
@@ -138,17 +155,23 @@ export default function GuessForm({
   /////////////////////////////////////////////////////////////
   // Navigation
   /////////////////////////////////////////////////////////////
-  const nextBeer = () => {
-    if (beerId < totalBeers) router.push(`/event/${eventId}/beer/${beerId + 1}`);
-  };
 
-  const prevBeer = () => {
-    if (beerId > 1) router.push(`/event/${eventId}/beer/${beerId - 1}`);
-  };
+  function nextBeer() {
+    if (beerId < totalBeers) {
+      router.push(`/event/${eventId}/beer/${beerId + 1}`);
+    }
+  }
+
+  function prevBeer() {
+    if (beerId > 1) {
+      router.push(`/event/${eventId}/beer/${beerId - 1}`);
+    }
+  }
 
   /////////////////////////////////////////////////////////////
   // Render
   /////////////////////////////////////////////////////////////
+
   return (
     <div className={styles.wrapper}>
       <h2 className={styles.title}>
@@ -158,7 +181,7 @@ export default function GuessForm({
       {saving && <div className={styles.saving}>Lagrer…</div>}
       {saved && <div className={styles.saved}>Lagret ✓</div>}
 
-      {/* Guess: Beer */}
+      {/* GUESS: Which beer */}
       <label className={styles.label}>Hvilken øl tror du det er?</label>
       <select
         value={form.guessed_beer_option_id}
@@ -173,7 +196,7 @@ export default function GuessForm({
         ))}
       </select>
 
-      {/* Guess: ABV */}
+      {/* GUESS: ABV */}
       <select
         value={form.guessed_abv_range_id}
         onChange={(e) => update("guessed_abv_range_id", e.target.value)}
@@ -187,7 +210,7 @@ export default function GuessForm({
         ))}
       </select>
 
-      {/* Guess: Type */}
+      {/* GUESS: Type */}
       <select
         value={form.guessed_type_id}
         onChange={(e) => update("guessed_type_id", e.target.value)}
@@ -201,7 +224,7 @@ export default function GuessForm({
         ))}
       </select>
 
-      {/* Rating */}
+      {/* RATING: Score */}
       <label className={styles.label}>Din rating</label>
       <input
         type="range"
@@ -213,7 +236,7 @@ export default function GuessForm({
       />
       <div className={styles.ratingValue}>{form.rating}/10</div>
 
-      {/* Untappd */}
+      {/* RATING: Untappd */}
       <label className={styles.label}>Untappd score (valgfritt)</label>
       <input
         type="number"

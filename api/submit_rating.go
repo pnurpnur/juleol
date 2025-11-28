@@ -14,7 +14,7 @@ func SubmitRating(w http.ResponseWriter, r *http.Request) {
 
     var payload struct {
         EventID      int      `json:"event_id"`
-        UserID       string   `json:"user_id"`
+        UserID       int      `json:"user_id"`
         BeerID       int      `json:"beer_id"`
         Rating       int      `json:"rating"`
         UntappdScore *float64 `json:"untappd_score"`

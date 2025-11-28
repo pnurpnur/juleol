@@ -14,7 +14,7 @@ func SubmitGuess(w http.ResponseWriter, r *http.Request) {
 
     var g struct {
         EventID             int     `json:"event_id"`
-        UserID              string  `json:"user_id"`
+        UserID              int  	`json:"user_id"`
         BeerID              int     `json:"beer_id"`
         GuessedBeerOptionID *int    `json:"guessed_beer_option_id"`
         GuessedABVRangeID   *int    `json:"guessed_abv_range_id"`

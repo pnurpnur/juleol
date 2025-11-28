@@ -4,27 +4,30 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./EventSelector.module.css";
 
-export default function EventSelector({ userId }: { userId?: string }) {
+export default function EventSelector({ userId }: { userId?: number }) {
   const [events, setEvents] = useState<any[]>([]);
   const [selected, setSelected] = useState("");
   const router = useRouter();
 
   useEffect(() => {
+    if (!userId) return; // vent til userId er klar
+
     async function loadEvents() {
-      const res = await fetch("/api/events");
+      const res = await fetch(`/api/events?user_id=${userId}`);
+      if (!res.ok) {
+        console.error("Kunne ikke hente events");
+        return;
+      }
       const data = await res.json();
       setEvents(data);
 
       // Hvis ett event → velg det automatisk
-      if (data.length === 1) {
-        setSelected(String(data[0].id));
-      } else if (data.length > 0) {
-        // Flere events → velg nyeste
+      if (data.length >= 1) {
         setSelected(String(data[0].id));
       }
     }
     loadEvents();
-  }, []);
+  }, [userId]); // ⚡ kjør på nytt når userId blir tilgjengelig
 
   if (!userId) return null;
 
@@ -42,7 +45,6 @@ export default function EventSelector({ userId }: { userId?: string }) {
 
   return (
     <div className={styles.container}>
-      
       {/* Dropdown vises kun hvis det finnes mer enn ett event */}
       {events.length > 1 && (
         <select
@@ -75,7 +77,6 @@ export default function EventSelector({ userId }: { userId?: string }) {
       >
         Se resultater
       </button>
-
     </div>
   );
 }

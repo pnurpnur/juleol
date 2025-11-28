@@ -6,6 +6,12 @@ import (
     "net/http"
 )
 
+type User struct {
+    ID    int    `json:"id"`
+    Name  string `json:"name"`
+    Email string `json:"email"`
+}
+
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
     if r.Method != "POST" {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -15,7 +21,6 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
     log.Println("RegisterUser called")
 
     var u struct {
-        ID    string `json:"id"`
         Name  string `json:"name"`
         Email string `json:"email"`
     }
@@ -26,7 +31,12 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    log.Printf("RegisterUser payload: id=%s name=%s email=%s\n", u.ID, u.Name, u.Email)
+    if u.Email == "" {
+        http.Error(w, "Email is required", http.StatusBadRequest)
+        return
+    }
+
+    log.Printf("RegisterUser payload: name=%s email=%s\n", u.Name, u.Email)
 
     db, err := DB()
     if err != nil {
@@ -35,11 +45,12 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    _, err = db.Exec(`
-        INSERT INTO users (id, name, email)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE name=VALUES(name), email=VALUES(email)
-    `, u.ID, u.Name, u.Email)
+    // Upsert med autoincrement ID
+    res, err := db.Exec(`
+        INSERT INTO users (name, email)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE name=VALUES(name)
+    `, u.Name, u.Email)
 
     if err != nil {
         log.Println("RegisterUser SQL error:", err)
@@ -47,6 +58,29 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    log.Println("RegisterUser success for user:", u.ID)
-    w.Write([]byte(`{"status":"ok"}`))
+    var userID int
+    // Hvis nytt insert, hent siste autoincrement ID
+    id, err := res.LastInsertId()
+    if err == nil && id > 0 {
+        userID = int(id)
+    } else {
+        // Hvis eksisterende rad, hent ID basert på email
+        row := db.QueryRow("SELECT id FROM users WHERE email = ?", u.Email)
+        if err := row.Scan(&userID); err != nil {
+            log.Println("RegisterUser fetch ID error:", err)
+            http.Error(w, "Failed to get user ID", http.StatusInternalServerError)
+            return
+        }
+    }
+
+    log.Println("RegisterUser success for user:", u.Email, "ID:", userID)
+
+    user := User{
+        ID:    userID,
+        Name:  u.Name,
+        Email: u.Email,
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(user)
 }

@@ -8,30 +8,29 @@ export default async function Home() {
   const session = await auth();
 
   const loggedIn = !!session;
+  const userId = session?.user?.id; // Dette er intern autoincrement userId
+
+  console.log("Session userId:", userId); // Skal nå vise et tall
 
   return (
     <div className={styles.pageBackground}>
-
       {/* Logo */}
       <Link href="/">
         <img src="/logo.png" alt="Logo" className={styles.logo} />
       </Link>
 
       {/* Event selector */}
-      {loggedIn && (
-        <>
-          <EventSelector userId={session?.user?.id} />
-        </>
-      )}
-
-      {/* Login button — only when not logged in */}
-      {!loggedIn && (
+      {loggedIn && userId ? (
+        <EventSelector userId={Number(userId)} />
+      ) : loggedIn ? (
+        <div>Henter brukerinfo…</div>
+      ) : (
         <div className={styles.middleSection}>
           <LoginButton />
         </div>
       )}
 
-      {/* Logg ut — always at the very bottom if logged in */}
+      {/* Logg ut */}
       {loggedIn && (
         <form
           action={async () => {

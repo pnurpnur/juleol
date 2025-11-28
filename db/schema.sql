@@ -1,6 +1,6 @@
 -- USERS (Google OAuth)
 CREATE TABLE IF NOT EXISTS users (
-    id VARCHAR(64) PRIMARY KEY,         -- Google "sub" ID
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(128),
     email VARCHAR(256) UNIQUE
 );
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS events (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(128) NOT NULL,         -- F.eks. "Juleøl 2025"
-    owner_id VARCHAR(64) NOT NULL,      -- Bruker som opprettet eventet
+    owner_id INT NOT NULL,              -- Bruker som opprettet eventet
     is_open BOOLEAN DEFAULT TRUE,       -- Lukkes når konkurransen er ferdig
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (owner_id) REFERENCES users(id)
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS beers (
 -- GUESSES (Svar levert av deltaker)
 CREATE TABLE IF NOT EXISTS guesses (
     event_id INT NOT NULL,
-    user_id VARCHAR(64) NOT NULL,
+    user_id INT NOT NULL,
     beer_id INT NOT NULL,
 
     guessed_beer_option_id INT,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS guesses (
 -- RATINGS (Svar levert av deltaker)
 CREATE TABLE IF NOT EXISTS ratings (
     event_id INT NOT NULL,
-    user_id VARCHAR(64) NOT NULL,
+    user_id INT NOT NULL,
     beer_id INT NOT NULL,
 
     rating INT NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS ratings (
 
     FOREIGN KEY (event_id) REFERENCES events(id),
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (beer_id) REFERENCES beers(id),
+    FOREIGN KEY (beer_id) REFERENCES beers(id)
 );
 
 CREATE TABLE event_beer_options (
