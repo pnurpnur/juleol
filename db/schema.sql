@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS events (
 
 CREATE TABLE beer_options (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(128) NOT NULL
+    name VARCHAR(128) NOT NULL,
+    untappd_link VARCHAR(256) NULL
 );
 
 CREATE TABLE abv_ranges (
