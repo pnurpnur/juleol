@@ -87,7 +87,11 @@ export default function EventBeers() {
 
   function cancelEdit() {
     setEditingId(null);
-    setEditForm({});
+    setEditForm({
+      beer_option_id: "",
+      abv_range_id: "",
+      beer_type_id: "",
+    });
   }
 
   return (
