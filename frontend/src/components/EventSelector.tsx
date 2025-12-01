@@ -31,6 +31,15 @@ export default function EventSelector({ userId }: { userId?: number }) {
 
   if (!userId) return null;
 
+  // Determine the currently selected event object
+  const selectedEvent =
+    events.find((ev) => String(ev.id) === selected) ?? events[0] ?? null;
+
+  // Support both camelCase and snake_case "open" flag
+  const eventIsOpen =
+    (selectedEvent && (selectedEvent.isOpen ?? selectedEvent.is_open ?? false)) ||
+    false;
+
   function start() {
     if (selected) {
       router.push(`/event/${selected}/beer/1`);
@@ -60,14 +69,16 @@ export default function EventSelector({ userId }: { userId?: number }) {
         </select>
       )}
 
-      {/* Start konkurranse */}
-      <button
-        disabled={!selected}
-        onClick={start}
-        className={styles.startButton}
-      >
-        Start smaking
-      </button>
+      {/* Start konkurranse — kun vises hvis event er åpen */}
+      {eventIsOpen && (
+        <button
+          disabled={!selected}
+          onClick={start}
+          className={styles.startButton}
+        >
+          Start smaking
+        </button>
+      )}
 
       {/* Se resultater */}
       <button
