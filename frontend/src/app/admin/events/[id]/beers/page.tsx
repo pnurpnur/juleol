@@ -2,6 +2,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
+interface BeerForm {
+  beer_option_id: string | number;
+  abv_range_id: string | number;
+  beer_type_id: string | number;
+}
+
 export default function EventBeers() {
   const params = useParams();
   const eventId = Number(params.id);
@@ -12,8 +18,12 @@ export default function EventBeers() {
   const [options, setOptions] = useState([]);
   const [abvs, setAbvs] = useState([]);
   const [types, setTypes] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<BeerForm>({
+    beer_option_id: "",
+    abv_range_id: "",
+    beer_type_id: "",
+  });
 
   useEffect(() => {
     fetch(`/api/events/${eventId}/beers`).then(r=>r.json()).then(setBeers).catch(console.error);
