@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS beers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     event_id INT NOT NULL,
     beer_option_id INT NOT NULL,
-    abv_range_id INT,
-    beer_type_id INT,
+    abv_range_id INT NOT NULL,
+    beer_type_id INT NOT NULL,
 
     FOREIGN KEY (event_id) REFERENCES events(id),
     FOREIGN KEY (beer_option_id) REFERENCES beer_options(id),

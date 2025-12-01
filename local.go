@@ -44,9 +44,13 @@ func main() {
 
     // EVENT DATA
     http.HandleFunc("/events", api.ListEvents)
+	http.HandleFunc("/event", api.GetEvent)
+	http.HandleFunc("/update_event", api.UpdateEvent)
+	http.HandleFunc("/event_beers", api.EventBeers)
     http.HandleFunc("/event_beer_options", api.EventBeerOptions)
     http.HandleFunc("/event_abv_ranges", api.EventABVRanges)
     http.HandleFunc("/types", api.BeerTypes)
+	http.HandleFunc("/delete_event_beer", api.DeleteEventBeer)
 
     // USERS
     http.HandleFunc("/register_user", api.RegisterUser)

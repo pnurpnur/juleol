@@ -14,7 +14,7 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
     }
 
     rows, err := db.Query(`
-        SELECT id, name, created_at
+        SELECT id, name, owner_id, is_open, created_at
         FROM events
         ORDER BY created_at DESC
     `)
@@ -27,6 +27,8 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
     type Event struct {
         ID    int    `json:"id"`
         Name  string `json:"name"`
+		Owner int	`json:"owner_id"`
+		Open  bool   `json:"is_open"`
         Date  string `json:"created_at"`
     }
 
@@ -34,7 +36,7 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 
     for rows.Next() {
         var ev Event
-        if err := rows.Scan(&ev.ID, &ev.Name, &ev.Date); err != nil {
+        if err := rows.Scan(&ev.ID, &ev.Name, &ev.Owner, &ev.Open, &ev.Date); err != nil {
             log.Println(err)
         }
         events = append(events, ev)
