@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+// use plain <img> to avoid next/image runtime DOM manipulation during debugging
+// import Image from "next/image";
 import styles from "./GuessForm.module.css";
 
 interface GuessFormProps {
@@ -38,7 +40,6 @@ export default function GuessForm({
   });
 
   const [isInitialized, setIsInitialized] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   /////////////////////////////////////////////////////////////
@@ -90,7 +91,6 @@ export default function GuessForm({
   /////////////////////////////////////////////////////////////
   const save = useCallback(async () => {
     if (!isInitialized) return;
-    setSaving(true);
     setSaved(false);
 
     try {
@@ -124,8 +124,6 @@ export default function GuessForm({
       setTimeout(() => setSaved(false), 1500);
     } catch (err) {
       console.error("Autosave error:", err);
-    } finally {
-      setSaving(false);
     }
   }, [form, eventId, beerId, userId, isInitialized]);
 
@@ -138,12 +136,18 @@ export default function GuessForm({
   /////////////////////////////////////////////////////////////
   // Navigation
   /////////////////////////////////////////////////////////////
+  const goToBeer = (num: number) => {
+    router.push(`/event/${eventId}/beer/${num}`);
+  };
+
   const nextBeer = () => {
-    if (beerId < totalBeers) router.push(`/event/${eventId}/beer/${beerId + 1}`);
+    const next = beerId < totalBeers ? beerId + 1 : 1;
+    goToBeer(next);
   };
 
   const prevBeer = () => {
-    if (beerId > 1) router.push(`/event/${eventId}/beer/${beerId - 1}`);
+    const prev = beerId > 1 ? beerId - 1 : totalBeers;
+    goToBeer(prev);
   };
 
   /////////////////////////////////////////////////////////////
@@ -151,92 +155,116 @@ export default function GuessForm({
   /////////////////////////////////////////////////////////////
   return (
     <div className={styles.wrapper}>
-      <h2 className={styles.title}>
-        Øl {beerId} av {totalBeers}
-      </h2>
+      {/* Header with logo */}
+      <header className={styles.header}>
+        <div
+          className={styles.logoContainer}
+          onClick={() => router.push("/")}
+          style={{ cursor: "pointer" }}
+        >
+          <img src="/logo.png" alt="Logo" width={150} height={150} />
+        </div>
+      </header>
 
-      {saving && <div className={styles.saving}>Lagrer…</div>}
-      {saved && <div className={styles.saved}>Lagret ✓</div>}
-
-      {/* Guess: Beer */}
-      <label className={styles.label}>Hvilken øl tror du det er?</label>
-      <select
-        value={form.guessed_beer_option_id}
-        onChange={(e) => update("guessed_beer_option_id", e.target.value)}
-        className={styles.select}
-      >
-        <option value="">Velg øl</option>
-        {beerOptions.map((o) => (
-          <option key={o.id} value={String(o.id)}>
-            {o.name}
-          </option>
+      {/* Beer navigator circles */}
+      <div className={styles.beerNavigator}>
+        {Array.from({ length: totalBeers }, (_, i) => i + 1).map((num) => (
+          <button
+            key={num}
+            onClick={() => goToBeer(num)}
+            className={`${styles.beerButton} ${num === beerId ? styles.active : ""}`}
+            title={`Øl ${num}`}
+          >
+            {num}
+          </button>
         ))}
-      </select>
+      </div>
 
-      {/* Guess: ABV */}
-      <select
-        value={form.guessed_abv_range_id}
-        onChange={(e) => update("guessed_abv_range_id", e.target.value)}
-        className={styles.select}
-      >
-        <option value="">Velg styrke</option>
-        {abvRanges.map((a) => (
-          <option key={a.id} value={String(a.id)}>
-            {a.label}
-          </option>
-        ))}
-      </select>
+      {/* Form content */}
+      <div className={styles.formContent}>
+        {/* Guess: Beer */}
+        <label className={styles.label}>Hvilken øl tror du det er?</label>
+        <select
+          value={form.guessed_beer_option_id}
+          onChange={(e) => update("guessed_beer_option_id", e.target.value)}
+          className={styles.select}
+        >
+          <option value="">Velg øl</option>
+          {beerOptions.map((o) => (
+            <option key={o.id} value={String(o.id)}>
+              {o.name}
+            </option>
+          ))}
+        </select>
 
-      {/* Guess: Type */}
-      <select
-        value={form.guessed_type_id}
-        onChange={(e) => update("guessed_type_id", e.target.value)}
-        className={styles.select}
-      >
-        <option value="">Velg type</option>
-        {types.map((t) => (
-          <option key={t.id} value={String(t.id)}>
-            {t.name}
-          </option>
-        ))}
-      </select>
+        {/* Guess: ABV */}
+        <label className={styles.label}>Styrke</label>
+        <select
+          value={form.guessed_abv_range_id}
+          onChange={(e) => update("guessed_abv_range_id", e.target.value)}
+          className={styles.select}
+        >
+          <option value="">Velg styrke</option>
+          {abvRanges.map((a) => (
+            <option key={a.id} value={String(a.id)}>
+              {a.label}
+            </option>
+          ))}
+        </select>
 
-      {/* Rating */}
-      <label className={styles.label}>Din rating</label>
-      <input
-        type="range"
-        min="1"
-        max="10"
-        value={form.rating}
-        onChange={(e) => update("rating", e.target.value)}
-        className={styles.slider}
-      />
-      <div className={styles.ratingValue}>{form.rating}/10</div>
+        {/* Guess: Type */}
+        <label className={styles.label}>Stil</label>
+        <select
+          value={form.guessed_type_id}
+          onChange={(e) => update("guessed_type_id", e.target.value)}
+          className={styles.select}
+        >
+          <option value="">Velg stil</option>
+          {types.map((t) => (
+            <option key={t.id} value={String(t.id)}>
+              {t.name}
+            </option>
+          ))}
+        </select>
 
-      {/* Untappd */}
-      <label className={styles.label}>Untappd score (valgfritt)</label>
-      <input
-        type="number"
-        min="0"
-        max="5"
-        step="0.1"
-        value={form.untappd_score}
-        onChange={(e) => update("untappd_score", e.target.value)}
-        className={styles.input}
-      />
+        {/* Rating */}
+        <label className={styles.label}>Din rating</label>
+        <div className={styles.sliderContainer}>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={form.rating}
+            onChange={(e) => update("rating", e.target.value)}
+            className={styles.slider}
+          />
+          <span className={styles.ratingValue}>{form.rating}/10</span>
+        </div>
 
-      {/* Navigation */}
+        {/* Untappd score */}
+        <label className={styles.label}>Untappd score (valgfritt)</label>
+        <div className={styles.sliderContainer}>
+          <input
+            type="range"
+            min="0"
+            max="5"
+            step="0.1"
+            value={form.untappd_score}
+            onChange={(e) => update("untappd_score", e.target.value)}
+            className={styles.slider}
+          />
+          <span className={styles.ratingValue}>{form.untappd_score || "0"}/5</span>
+        </div>
+      </div>
+
+      {/* Navigation buttons */}
       <div className={styles.navButtons}>
-        {beerId > 1 && (
-          <button onClick={prevBeer} className={styles.navButton}>
-            ← Forrige
-          </button>
-        )}
-        {beerId < totalBeers && (
-          <button onClick={nextBeer} className={styles.navButton}>
-            Neste →
-          </button>
-        )}
+        <button onClick={prevBeer} className={styles.navButton}>
+          ← Forrige
+        </button>
+        <button onClick={nextBeer} className={styles.navButton}>
+          Neste →
+        </button>
       </div>
     </div>
   );

@@ -48,7 +48,7 @@ export default function EventSelector({ userId }: { userId?: number }) {
 
   function showResults() {
     if (selected) {
-      router.push(`/results?event=${selected}`);
+      router.push(`/event/${selected}/results`);
     }
   }
 

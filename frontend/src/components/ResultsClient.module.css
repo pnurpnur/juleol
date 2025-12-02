@@ -1,0 +1,51 @@
+body {
+    background-color: #8c8a6b;
+}
+
+.container {
+  padding: 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 2px solid #666;
+  font-weight: 700;
+  font-size: 12px;
+  background: #dbd69b;
+}
+
+.td {
+  padding: 8px 10px;
+  vertical-align: middle;
+  font-size: 12px;
+}
+
+.row {
+  border-top: 1px solid #666;
+  cursor: pointer;
+}
+
+.rowSelected {
+  background: rgba(77, 150, 50, 0.868);
+  color: rgba(223, 232, 219, 0.916);
+}
+
+.correct {
+  background: rgba(77, 150, 50, 0.868);
+  color: rgba(223, 232, 219, 0.916);
+}
+
+.incorrect {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.link {
+  color: inherit;
+  text-decoration: none;
+}

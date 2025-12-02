@@ -1,85 +1,177 @@
+body {
+  background-color: #8c8a6b;
+}
+
 .wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 12px; /* mindre padding */
+}
+
+.header {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 24px;
-  background: #fafafa;
-  border-radius: 10px;
-  border: 1px solid #ddd;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px; /* mindre mellomrom */
+  border-bottom: 1px solid #666;
+  padding-bottom: 10px;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .title {
+  font-size: 20px; /* litt mindre */
+  font-weight: bold;
+  text-align: center;
+  flex: 1;
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
+}
+
+.beerNavigator {
+  display: flex;
+  gap: 6px; /* tettere */
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  justify-content: center;
+}
+
+.beerButton {
+  width: 28px; /* mindre knapp */
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  background: white;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-size: 13px;
+  padding: 0;
+}
+
+.beerButton:hover {
+  border-color: #999;
+  background: #f5f5f5;
+}
+
+.beerButton.active {
+  background: #333;
+  color: white;
+  border-color: #333;
+}
+
+.formContent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* mindre gap mellom felt */
+  margin-bottom: 18px;
 }
 
 .label {
-  font-weight: 500;
-  margin-bottom: 4px;
-  margin-top: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px; /* mindre mellomrom til input */
+  display: block;
+  font-size: 14px;
 }
 
 .select {
-  padding: 8px;
-  border-radius: 6px;
+  padding: 8px; /* litt mindre */
   border: 1px solid #ccc;
-  font-size: 1rem;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
 }
 
-.input {
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  width: 100%;
-  font-size: 1rem;
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .slider {
-  width: 100%;
+  flex: 1;
+  height: 4px; /* tynnere */
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px; /* mindre thumb */
+  height: 16px;
+  border-radius: 50%;
+  background: #333;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #333;
+  cursor: pointer;
+  border: none;
 }
 
 .ratingValue {
-  font-size: 1.1rem;
+  min-width: 40px;
+  text-align: right;
   font-weight: 600;
-  text-align: center;
-  margin-top: -10px;
-}
-
-.saving {
-  background: #ffe9b3;
-  padding: 8px;
-  border-left: 4px solid #f7b500;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #805a00;
-}
-
-.saved {
-  background: #d8f5d0;
-  padding: 8px;
-  border-left: 4px solid #3aa655;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #1f7a37;
+  color: #333;
+  font-size: 13px;
 }
 
 .navButtons {
   display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
+  gap: 8px; /* tettere navigasjon */
+  justify-content: center;
+  margin-top: 18px;
 }
 
 .navButton {
-  padding: 10px 16px;
-  border-radius: 6px;
-  border: none;
+  padding: 10px 16px; /* mindre knapper */
   background: #333;
   color: white;
-  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.12s;
+  font-size: 14px;
 }
 
 .navButton:hover {
   background: #555;
+}
+
+.saved {
+  padding: 8px;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 4px;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+/* Mobilspesifikk: gjør det enda tettere */
+@media (max-width: 480px) {
+  .wrapper { padding: 10px; }
+  .title { font-size: 18px; }
+  .beerButton { width: 26px; height: 26px; font-size: 12px; }
+  .formContent { gap: 8px; }
+  .label { font-size: 13px; margin-bottom: 4px; }
+  .select { padding: 7px; font-size: 13px; }
+  .navButton { padding: 8px 12px; font-size: 13px; }
+  .ratingValue { font-size: 12px; min-width: 36px; }
 }

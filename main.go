@@ -53,6 +53,10 @@ func main() {
     http.HandleFunc("/types", api.BeerTypes)
 	http.HandleFunc("/delete_event_beer", api.DeleteEventBeer)
 
+	// RESULTS
+	http.HandleFunc("/user_results", api.GetUserResults)
+	http.HandleFunc("/results", api.Leaderboard)
+
     // Users
     http.HandleFunc("/register_user", api.RegisterUser)
 
