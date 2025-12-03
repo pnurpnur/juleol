@@ -11,7 +11,7 @@ interface ResultsData {
 }
 
 interface Standing {
-  userId: number | string;
+  userId: number;
   userName: string;
   placement: number;
   points: number;

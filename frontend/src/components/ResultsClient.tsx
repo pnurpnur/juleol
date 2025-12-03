@@ -46,12 +46,13 @@ export default function ResultsClient({
   initialResults,
 }: {
   eventId: number;
+  userId: number;
   initialResults?: ResultsData;
 }) {
   const [standings, setStandings] = useState<Standing[]>(
     initialResults?.standings ?? []
   );
-  const [userResults, setUserResults] = useState<Map<string, UserResult[]>>(
+  const [userResults, setUserResults] = useState<Map<number, UserResult[]>>(
     new Map()
   );
   const [loading, setLoading] = useState<boolean>(!initialResults);
