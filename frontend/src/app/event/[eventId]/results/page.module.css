@@ -1,0 +1,27 @@
+body {
+    margin: 0;
+}
+
+/* Hele siden */
+.pageBackground {
+  min-height: 100vh;
+  background-color: #8c8a6b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+} 
+
+/* Større logo */
+.logo {
+  width: 150px;
+  height: auto;
+  opacity: 0.95;
+}

@@ -15,15 +15,12 @@ interface Standing {
 export default function Leaderboard({
   standings,
   selectedUserId,
-  onSelectUser,
 }: {
   standings: Standing[];
   selectedUserId: string;
-  onSelectUser: (userId: string) => void;
 }) {
   return (
     <div style={{ overflowX: "auto"}}>
-      <h3>Beste ølhund</h3>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -39,7 +36,6 @@ export default function Leaderboard({
           {standings.map((s) => (
             <tr
               key={String(s.userId)}
-              onClick={() => onSelectUser(String(s.userId))}
               className={`${styles.row} ${
                 selectedUserId === String(s.userId) ? styles.rowSelected : ""
               }`}

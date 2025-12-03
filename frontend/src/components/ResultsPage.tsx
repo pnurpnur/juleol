@@ -60,7 +60,6 @@ export default function ResultsPage({
           <Leaderboard
             standings={initialResults.standings}
             selectedUserId={String(initialResults.standings[0]?.userId ?? "")}
-            onSelectUser={() => {}}
           />
         )}
         {view === "bestbeers" && <BestBeers eventId={eventId} />}

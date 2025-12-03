@@ -232,12 +232,6 @@ export default function ResultsClient({
           </div>
         </div>
       )}
-
-      <Leaderboard
-        standings={standings}
-        selectedUserId={selectedUserId}
-        onSelectUser={setSelectedUserId}
-      />
     </section>
   );
 }

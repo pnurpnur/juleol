@@ -47,7 +47,6 @@ export default function BestBeers({ eventId }: { eventId: number }) {
 
   return (
     <div>
-      <h2>Beste øl</h2>
       <table className={styles.table}>
         <thead>
           <tr>

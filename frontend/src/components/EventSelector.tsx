@@ -35,10 +35,11 @@ export default function EventSelector({ userId }: { userId?: number }) {
   const selectedEvent =
     events.find((ev) => String(ev.id) === selected) ?? events[0] ?? null;
 
-  // Support both camelCase and snake_case "open" flag
   const eventIsOpen =
-    (selectedEvent && (selectedEvent.isOpen ?? selectedEvent.is_open ?? false)) ||
-    false;
+    ((selectedEvent && selectedEvent.is_open) ?? false);
+
+   const userIsOwner =
+    ((selectedEvent && (selectedEvent.owner_id == userId)) ?? false);
 
   function start() {
     if (selected) {
@@ -80,14 +81,16 @@ export default function EventSelector({ userId }: { userId?: number }) {
         </button>
       )}
 
-      {/* Se resultater */}
-      <button
-        disabled={!selected}
-        onClick={showResults}
-        className={styles.resultsButton}
-      >
-        Se resultater
-      </button>
+      {/* Se resultater — kun vises hvis event er stengt eller user = owner */}
+      {(!eventIsOpen || userIsOwner) && (
+        <button
+            disabled={!selected}
+            onClick={showResults}
+            className={styles.resultsButton}
+        >
+            Se resultater
+        </button>
+        )}
     </div>
   );
 }

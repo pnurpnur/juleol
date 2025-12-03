@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import ResultsPage from "@/components/ResultsPage";
+import Leaderboard from "@/components/Leaderboard";
 import styles from "./page.module.css";
 
 export default async function Page(props: { params: Promise<{ eventId: string }> }) {
@@ -8,6 +8,7 @@ export default async function Page(props: { params: Promise<{ eventId: string }>
   const session = await auth();
   if (!session) redirect("/");
 
+  const userId = String(session.user.id);
   const eventId = Number(params.eventId);
   const API = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
@@ -25,7 +26,10 @@ export default async function Page(props: { params: Promise<{ eventId: string }>
         </a>
       </header>
 
-      <ResultsPage initialResults={results} eventId={eventId} />
+      <Leaderboard
+        standings={results.standings}
+        selectedUserId={userId}
+      />
     </main>
   );
 }
