@@ -8,6 +8,7 @@ export default async function Page(props: { params: Promise<{ eventId: string }>
   const session = await auth();
   if (!session) redirect("/");
 
+  const userId = Number(session.user.id);
   const eventId = Number(params.eventId);
   const API = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
@@ -25,7 +26,7 @@ export default async function Page(props: { params: Promise<{ eventId: string }>
         </a>
       </header>
 
-      <ResultsPage initialResults={results} eventId={eventId} />
+      <ResultsPage initialResults={results} eventId={eventId} userId={userId} />
     </main>
   );
 }

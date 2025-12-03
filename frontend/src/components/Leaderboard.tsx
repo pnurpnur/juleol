@@ -17,7 +17,7 @@ export default function Leaderboard({
   selectedUserId,
 }: {
   standings: Standing[];
-  selectedUserId: string;
+  selectedUserId: number;
 }) {
   return (
     <div style={{ overflowX: "auto"}}>
@@ -37,7 +37,7 @@ export default function Leaderboard({
             <tr
               key={String(s.userId)}
               className={`${styles.row} ${
-                selectedUserId === String(s.userId) ? styles.rowSelected : ""
+                selectedUserId === s.userId ? styles.rowSelected : ""
               }`}
             >
               <td className={styles.td}>{s.placement}</td>

@@ -22,9 +22,11 @@ interface Standing {
 
 export default function ResultsPage({
   eventId,
+  userId,
   initialResults,
 }: {
   eventId: number;
+  userId: number;
   initialResults: ResultsData;
 }) {
   const [view, setView] = useState<"results" | "leaderboard" | "bestbeers">("results");
@@ -54,12 +56,12 @@ export default function ResultsPage({
 
       <div className={styles.content}>
         {view === "results" && (
-          <ResultsClient eventId={eventId} initialResults={initialResults} />
+          <ResultsClient eventId={eventId} userId={userId} initialResults={initialResults} />
         )}
         {view === "leaderboard" && (
           <Leaderboard
             standings={initialResults.standings}
-            selectedUserId={String(initialResults.standings[0]?.userId ?? "")}
+            selectedUserId={userId}
           />
         )}
         {view === "bestbeers" && <BestBeers eventId={eventId} />}

@@ -42,6 +42,7 @@ interface UserResultsData {
 
 export default function ResultsClient({
   eventId,
+  userId,
   initialResults,
 }: {
   eventId: number;
@@ -52,11 +53,6 @@ export default function ResultsClient({
   );
   const [userResults, setUserResults] = useState<Map<string, UserResult[]>>(
     new Map()
-  );
-  const [selectedUserId, setSelectedUserId] = useState<string>(
-    initialResults?.standings?.[0]?.userId !== undefined
-      ? String(initialResults!.standings[0].userId)
-      : ""
   );
   const [loading, setLoading] = useState<boolean>(!initialResults);
 
@@ -70,9 +66,6 @@ export default function ResultsClient({
         if (res.ok) {
           const data: ResultsData = await res.json();
           setStandings(data.standings);
-          if (!selectedUserId && data.standings.length > 0) {
-            setSelectedUserId(String(data.standings[0].userId));
-          }
         } else {
           console.error("Failed to fetch standings:", res.status);
         }
@@ -91,22 +84,18 @@ export default function ResultsClient({
   }, [eventId]);
 
   useEffect(() => {
-    if (!selectedUserId) return;
-    if (userResults.has(selectedUserId)) return;
     let mounted = true;
     const fetchUser = async () => {
       try {
         const res = await fetch(
-          `/api/user_results?event_id=${eventId}&user_id=${encodeURIComponent(
-            selectedUserId
-          )}`
+          `/api/user_results?event_id=${eventId}&user_id=${userId}`
         );
         if (!mounted) return;
         if (res.ok) {
           const data: UserResultsData = await res.json();
           setUserResults((prev) => {
             const copy = new Map(prev);
-            copy.set(selectedUserId, data.items);
+            copy.set(userId, data.items);
             return copy;
           });
         } else {
@@ -120,11 +109,11 @@ export default function ResultsClient({
     return () => {
       mounted = false;
     };
-  }, [eventId, selectedUserId]);
+  }, [eventId, userId]);
 
-  const currentUserItems = selectedUserId ? userResults.get(selectedUserId) : [];
+  const currentUserItems = userResults.get(userId);
   const currentStanding = standings.find(
-    (s) => String(s.userId) === selectedUserId
+    (s) => s.userId === userId
   );
 
   if (loading) return <div>Laster resultater…</div>;
