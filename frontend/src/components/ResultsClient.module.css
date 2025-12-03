@@ -28,7 +28,6 @@ body {
 
 .row {
   border-top: 1px solid #666;
-  cursor: pointer;
 }
 
 .rowSelected {
@@ -48,4 +47,10 @@ body {
 .link {
   color: inherit;
   text-decoration: none;
+}
+
+.untappdIcon {
+  height: 20px;
+  vertical-align: middle;
+  margin-left: 7px;
 }

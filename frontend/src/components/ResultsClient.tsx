@@ -144,11 +144,11 @@ export default function ResultsClient({
                 <tr>
                   <th className={styles.th}>Øl</th>
                   <th className={styles.th}>Riktig øl</th>
-                  <th className={styles.th}>Gjett øl</th>
+                  <th className={styles.th}>Gjett</th>
                   <th className={styles.th}>Riktig ABV</th>
-                  <th className={styles.th}>Gjett ABV</th>
+                  <th className={styles.th}>Gjett</th>
                   <th className={styles.th}>Riktig stil</th>
-                  <th className={styles.th}>Gjett stil</th>
+                  <th className={styles.th}>Gjett</th>
                   <th className={styles.th}>Rating</th>
                   <th className={styles.th}>Untappd</th>
                 </tr>
@@ -198,23 +198,29 @@ export default function ResultsClient({
 
                     <td className={styles.td}>{item.rating ?? "-"}</td>
                     <td className={styles.td}>
-                      {item.untappdScore && item.untappdLink ? (
+                      {item.untappdScore}
+                      {item.untappdLink ? (
                         <a
-                          href={item.untappdLink}
+                          href={`https://untappd.com/beer/${item.untappdLink}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.location.href = `untappd://beer/${item.untappdLink}`;
+                            setTimeout(() => {
+                              window.open(
+                                `https://untappd.com/beer/${item.untappdLink}`,
+                                "_blank"
+                              );
+                            }, 500);
+                          }}
                           target="_blank"
                           rel="noreferrer"
                           className={styles.link}
                         >
-                          {item.untappdScore} 🔗
-                        </a>
-                      ) : item.untappdLink ? (
-                        <a
-                          href={item.untappdLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={styles.link}
-                        >
-                          🔗
+                          <img
+                            src="/untappd.jpg"
+                            alt="Untappd"
+                            className={styles.untappdIcon}
+                          />
                         </a>
                       ) : (
                         "-"
