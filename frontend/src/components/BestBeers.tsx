@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import styles from "./ResultsClient.module.css";
 
 interface BeerScore {
+  beerOrder: number;
   beerName: string;
   untappdLink: string;
   sum: number;
@@ -51,9 +52,8 @@ export default function BestBeers({ eventId }: { eventId: number }) {
         <thead>
           <tr>
             <th className={styles.th}>Øl</th>
+            <th className={styles.th}>Nr</th>
             <th className={styles.th}>Snitt</th>
-            <th className={styles.th}>Poeng</th>
-            <th className={styles.th}>Stemmer</th>
             <th className={styles.th}>Untappd</th>
           </tr>
         </thead>
@@ -61,9 +61,8 @@ export default function BestBeers({ eventId }: { eventId: number }) {
           {beers.map((beer) => (
             <tr key={beer.beerName} className={styles.row}>
               <td className={styles.td}>{beer.beerName}</td>
+              <td className={styles.td}>{beer.beerOrder}</td>
               <td className={styles.td}>{beer.average.toFixed(2)}</td>
-              <td className={styles.td}>{beer.sum}</td>
-              <td className={styles.td}>{beer.ratings}</td>
               <td className={styles.td}>
                 {beer.untappdLink ? (
                 <a

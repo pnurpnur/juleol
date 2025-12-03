@@ -8,6 +8,7 @@ import (
 )
 
 type BeerScore struct {
+	BeerOrder   int     `json:"beerOrder"`
 	BeerName    string  `json:"beerName"`
 	UntappdLink string  `json:"untappdLink"`
 	Sum         int     `json:"sum"`
@@ -42,6 +43,7 @@ func GetBestBeers(w http.ResponseWriter, r *http.Request) {
 
 	q := `
 SELECT
+  b.id AS beer_order,
   bo.name AS beer_name,
   bo.untappd_link,
   SUM(r.rating) AS rating_sum,
@@ -51,7 +53,7 @@ FROM ratings r
 JOIN beers b on b.id = r.beer_id
 JOIN beer_options bo ON bo.id = b.beer_option_id
 WHERE r.event_id = ?
-GROUP BY bo.id
+GROUP BY b.id
 ORDER BY average_rating DESC
 `
 
@@ -66,7 +68,7 @@ ORDER BY average_rating DESC
 	var beers []BeerScore
 	for rows.Next() {
 		var b BeerScore
-		if err := rows.Scan(&b.BeerName, &b.UntappdLink, &b.Sum, &b.Ratings, &b.Average); err != nil {
+		if err := rows.Scan(&b.BeerOrder, &b.BeerName, &b.UntappdLink, &b.Sum, &b.Ratings, &b.Average); err != nil {
 			log.Println("scan error:", err)
 			continue
 		}

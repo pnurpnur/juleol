@@ -198,7 +198,7 @@ export default function GuessForm({
         </select>
 
         {/* Guess: ABV */}
-        <label className={styles.label}>Styrke</label>
+        <label className={styles.label}>Styrke?</label>
         <select
           value={form.guessed_abv_range_id}
           onChange={(e) => update("guessed_abv_range_id", e.target.value)}
@@ -213,7 +213,7 @@ export default function GuessForm({
         </select>
 
         {/* Guess: Type */}
-        <label className={styles.label}>Stil</label>
+        <label className={styles.label}>Stil?</label>
         <select
           value={form.guessed_type_id}
           onChange={(e) => update("guessed_type_id", e.target.value)}
@@ -242,7 +242,7 @@ export default function GuessForm({
         </div>
 
         {/* Untappd score */}
-        <label className={styles.label}>Untappd score (valgfritt)</label>
+        <label className={styles.label}>Untappd-score (valgfritt)</label>
         <div className={styles.sliderContainer}>
           <input
             type="range"
