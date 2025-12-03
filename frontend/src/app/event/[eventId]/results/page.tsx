@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import ResultsClient from "@/components/ResultsClient";
+import ResultsPage from "@/components/ResultsPage";
 
 export default async function Page(props: { params: Promise<{ eventId: string }> }) {
   const params = await props.params;
@@ -12,7 +12,6 @@ export default async function Page(props: { params: Promise<{ eventId: string }>
 
   const res = await fetch(`${API}/results?event_id=${eventId}`, { cache: "no-store" });
   if (!res.ok) {
-    // fallback: return empty page or redirect
     return <main><h1>Kunne ikke hente resultater</h1></main>;
   }
   const results = await res.json();
@@ -23,7 +22,7 @@ export default async function Page(props: { params: Promise<{ eventId: string }>
         <a href="/" aria-label="Forsiden"><img src="/logo.png" alt="logo" style={{ height: 150 }} /></a>
       </header>
 
-      <ResultsClient initialResults={results} eventId={eventId} />
+      <ResultsPage initialResults={results} eventId={eventId} />
     </main>
   );
 }

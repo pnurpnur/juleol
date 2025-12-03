@@ -23,13 +23,13 @@ export default function Leaderboard({
 }) {
   return (
     <div style={{ overflowX: "auto"}}>
-      <h3>Rangering</h3>
+      <h3>Beste ølhund</h3>
       <table className={styles.table}>
         <thead>
           <tr>
             <th className={styles.th}>Plass</th>
-            <th className={styles.th}>Bruker</th>
-            <th className={styles.th}>Totalt</th>
+            <th className={styles.th}>Deltaker</th>
+            <th className={styles.th}>Poeng</th>
             <th className={styles.th}>Øl</th>
             <th className={styles.th}>ABV</th>
             <th className={styles.th}>Stil</th>

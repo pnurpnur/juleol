@@ -55,6 +55,7 @@ func main() {
 	// RESULTS
 	http.HandleFunc("/user_results", api.GetUserResults)
 	http.HandleFunc("/results", api.Leaderboard)
+	http.HandleFunc("/best_beers", api.GetBestBeers)
 
     // USERS
     http.HandleFunc("/register_user", api.RegisterUser)

@@ -134,20 +134,19 @@ export default function ResultsClient({
       {currentStanding && (
         <div>
           <h3>
-            {currentStanding.userName} — {currentStanding.points} poeng
-            ({currentStanding.placement}. plass)
+            {currentStanding.points} poeng ({currentStanding.placement}. plass)
           </h3>
 
           <div style={{ overflowX: "auto" }}>
             <table className={styles.table}>
               <thead>
                 <tr>
+                  <th className={styles.th}>#</th>
                   <th className={styles.th}>Øl</th>
-                  <th className={styles.th}>Riktig øl</th>
                   <th className={styles.th}>Gjett</th>
-                  <th className={styles.th}>Riktig ABV</th>
+                  <th className={styles.th}>ABV</th>
                   <th className={styles.th}>Gjett</th>
-                  <th className={styles.th}>Riktig stil</th>
+                  <th className={styles.th}>Stil</th>
                   <th className={styles.th}>Gjett</th>
                   <th className={styles.th}>Rating</th>
                   <th className={styles.th}>Untappd</th>
@@ -156,7 +155,7 @@ export default function ResultsClient({
               <tbody>
                 {currentUserItems?.map((item) => (
                   <tr key={item.eventBeerId} className={styles.row}>
-                    <td className={styles.td}>#{item.eventBeerId}</td>
+                    <td className={styles.td}>{item.eventBeerId}</td>
                     <td className={styles.td}>{item.correctOptionName ?? "-"}</td>
                     <td
                       className={`${styles.td} ${
