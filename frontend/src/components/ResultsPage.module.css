@@ -1,5 +1,8 @@
 .container {
-  padding: 0px;
+  width: 100%;
+  max-width: 900px; /* or any width you want */
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .nav {

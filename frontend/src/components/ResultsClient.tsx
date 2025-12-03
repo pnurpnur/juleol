@@ -122,12 +122,12 @@ export default function ResultsClient({
   return (
     <section className={styles.container}>
       {currentStanding && (
-        <div>
+        <div className={styles.standingsDiv}>
           <h3>
             {currentStanding.points} poeng ({currentStanding.placement}. plass)
           </h3>
 
-          <div style={{ overflowX: "auto" }}>
+          <div className={styles.tableDiv}>
             <table className={styles.table}>
               <thead>
                 <tr>
