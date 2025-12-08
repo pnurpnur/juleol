@@ -43,10 +43,12 @@ interface UserResultsData {
 export default function ResultsClient({
   eventId,
   userId,
+  isOwner,
   initialResults,
 }: {
   eventId: number;
   userId: number;
+  isOwner: boolean;
   initialResults?: ResultsData;
 }) {
   const [standings, setStandings] = useState<Standing[]>(
@@ -76,7 +78,7 @@ export default function ResultsClient({
         if (mounted) setLoading(false);
       }
     };
-    if (!initialResults) fetchStandings();
+    if (!initialResults && !isOwner) fetchStandings();
     else setLoading(false);
     return () => {
       mounted = false;
@@ -121,107 +123,116 @@ export default function ResultsClient({
 
   return (
     <section className={styles.container}>
-      {currentStanding && (
-        <div className={styles.standingsDiv}>
-          <h3>
-            {currentStanding.points} poeng ({currentStanding.placement}. plass)
-          </h3>
+        {!isOwner && currentStanding && (
+            <>
+                <div className={styles.standingsDiv}>
+                    <h3>
+                        {currentStanding.points} poeng ({currentStanding.placement}. plass)
+                    </h3>
+                </div>
+            </>
+        )}
 
-          <div className={styles.tableDiv}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.th}>#</th>
-                  <th className={styles.th}>Øl</th>
-                  <th className={styles.th}>Gjett</th>
-                  <th className={styles.th}>ABV</th>
-                  <th className={styles.th}>Gjett</th>
-                  <th className={styles.th}>Stil</th>
-                  <th className={styles.th}>Gjett</th>
-                  <th className={styles.th}>Rating</th>
-                  <th className={styles.th}>Untappd</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentUserItems?.map((item) => (
-                  <tr key={item.eventBeerId} className={styles.row}>
-                    <td className={styles.td}>{item.eventBeerId}</td>
-                    <td className={styles.td}>{item.correctOptionName ?? "-"}</td>
-                    <td
-                      className={`${styles.td} ${
-                        item.guessedOptionName
-                          ? item.correct
-                            ? styles.correct
-                            : styles.incorrect
-                          : ""
-                      }`}
-                    >
-                      {item.guessedOptionName ?? "-"}
-                    </td>
-
-                    <td className={styles.td}>{item.correctAbvName ?? "-"}</td>
-                    <td
-                      className={`${styles.td} ${
-                        item.guessedAbvName
-                          ? item.abvCorrect
-                            ? styles.correct
-                            : styles.incorrect
-                          : ""
-                      }`}
-                    >
-                      {item.guessedAbvName ?? "-"}
-                    </td>
-
-                    <td className={styles.td}>{item.correctTypeName ?? "-"}</td>
-                    <td
-                      className={`${styles.td} ${
-                        item.guessedTypeName
-                          ? item.typeCorrect
-                            ? styles.correct
-                            : styles.incorrect
-                          : ""
-                      }`}
-                    >
-                      {item.guessedTypeName ?? "-"}
-                    </td>
-
-                    <td className={styles.td}>{item.rating ?? "-"}</td>
-                    <td className={styles.td}>
-                      {item.untappdScore}
-                      {item.untappdLink ? (
-                        <a
-                          href={`https://untappd.com/beer/${item.untappdLink}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.href = `untappd://beer/${item.untappdLink}`;
-                            setTimeout(() => {
-                              window.open(
-                                `https://untappd.com/beer/${item.untappdLink}`,
-                                "_blank"
-                              );
-                            }, 500);
-                          }}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={styles.link}
+        <div className={styles.tableDiv}>
+          <table className={styles.table}>
+            <thead>
+            <tr>
+                <th className={styles.th}>#</th>
+                <th className={styles.th}>Øl</th>
+                {!isOwner && (
+                <>
+                    <th className={styles.th}>Gjett</th>
+                    <th className={styles.th}>ABV</th>
+                    <th className={styles.th}>Gjett</th>
+                    <th className={styles.th}>Stil</th>
+                    <th className={styles.th}>Gjett</th>
+                </>
+            )}
+                <th className={styles.th}>Rating</th>
+                <th className={styles.th}>Untappd</th>
+            </tr>
+            </thead>
+            <tbody>
+            {currentUserItems?.map((item) => (
+                <tr key={item.eventBeerId} className={styles.row}>
+                <td className={styles.td}>{item.eventBeerId}</td>
+                <td className={styles.td}>{item.correctOptionName ?? "-"}</td>
+                {!isOwner && (
+                    <>
+                        <td
+                        className={`${styles.td} ${
+                            item.guessedOptionName
+                            ? item.correct
+                                ? styles.correct
+                                : styles.incorrect
+                            : ""
+                        }`}
                         >
-                          <img
-                            src="/untappd.jpg"
-                            alt="Untappd"
-                            className={styles.untappdIcon}
-                          />
-                        </a>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        {item.guessedOptionName ?? "-"}
+                        </td>
+
+                        <td className={styles.td}>{item.correctAbvName ?? "-"}</td>
+                        <td
+                        className={`${styles.td} ${
+                            item.guessedAbvName
+                            ? item.abvCorrect
+                                ? styles.correct
+                                : styles.incorrect
+                            : ""
+                        }`}
+                        >
+                        {item.guessedAbvName ?? "-"}
+                        </td>
+
+                        <td className={styles.td}>{item.correctTypeName ?? "-"}</td>
+                        <td
+                        className={`${styles.td} ${
+                            item.guessedTypeName
+                            ? item.typeCorrect
+                                ? styles.correct
+                                : styles.incorrect
+                            : ""
+                        }`}
+                        >
+                        {item.guessedTypeName ?? "-"}
+                        </td>
+                    </>
+                )}
+                <td className={styles.td}>{item.rating ?? "-"}</td>
+                <td className={styles.td}>
+                    {item.untappdScore}
+                    {item.untappdLink ? (
+                    <a
+                        href={`https://untappd.com/beer/${item.untappdLink}`}
+                        onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `untappd://beer/${item.untappdLink}`;
+                        setTimeout(() => {
+                            window.open(
+                            `https://untappd.com/beer/${item.untappdLink}`,
+                            "_blank"
+                            );
+                        }, 500);
+                        }}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.link}
+                    >
+                        <img
+                        src="/untappd.jpg"
+                        alt="Untappd"
+                        className={styles.untappdIcon}
+                        />
+                    </a>
+                    ) : (
+                    "-"
+                    )}
+                </td>
+                </tr>
+            ))}
+            </tbody>
+          </table>
         </div>
-      )}
     </section>
   );
 }

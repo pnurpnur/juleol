@@ -24,10 +24,12 @@ export default function ResultsPage({
   eventId,
   userId,
   initialResults,
+  isOwner,
 }: {
   eventId: number;
   userId: number;
   initialResults: ResultsData;
+  isOwner: boolean;
 }) {
   const [view, setView] = useState<"results" | "leaderboard" | "bestbeers">("results");
 
@@ -56,7 +58,7 @@ export default function ResultsPage({
 
       <div className={styles.content}>
         {view === "results" && (
-          <ResultsClient eventId={eventId} userId={userId} initialResults={initialResults} />
+          <ResultsClient eventId={eventId} userId={userId} isOwner={isOwner} initialResults={initialResults} />
         )}
         {view === "leaderboard" && (
           <Leaderboard

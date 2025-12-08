@@ -57,7 +57,8 @@ FROM guesses g
 LEFT JOIN users u ON g.user_id = u.id
 JOIN beers eb
   ON g.event_id = eb.event_id AND g.beer_id = eb.id
-WHERE g.event_id = ?
+JOIN events e ON g.event_id = e.id
+WHERE g.event_id = ? AND g.user_id != e.owner_id
 GROUP BY g.user_id
 ORDER BY (beer_points + abv_points + type_points) DESC
 `

@@ -18,6 +18,15 @@ export default async function Page(props: { params: Promise<{ eventId: string }>
   }
   const results = await res.json();
 
+  const eventRes = await fetch(`${API}/event?event_id=${eventId}`);
+  if (!eventRes.ok) {
+    return <main><h1>Kunne ikke hente event</h1></main>;
+  }
+  const event = await eventRes.json();
+
+  const isOwner = event.owner_id === userId;
+  console.log("isOwner:", isOwner);
+
   return (
     <main className={styles.pageBackground}>
       <header className={styles.header}>
@@ -26,7 +35,7 @@ export default async function Page(props: { params: Promise<{ eventId: string }>
         </a>
       </header>
 
-      <ResultsPage initialResults={results} eventId={eventId} userId={userId} />
+      <ResultsPage initialResults={results} eventId={eventId} userId={userId} isOwner={isOwner} />
     </main>
   );
 }
