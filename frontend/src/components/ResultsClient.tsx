@@ -149,7 +149,7 @@ export default function ResultsClient({
                     <th className={styles.th}>Gjett</th>
                 </>
             )}
-                <th className={styles.th}>Rating</th>
+                <th className={[styles.th, styles.center].join(" ")}>Rating</th>
                 <th className={styles.th}>Untappd</th>
             </tr>
             </thead>
@@ -199,7 +199,7 @@ export default function ResultsClient({
                         </td>
                     </>
                 )}
-                <td className={styles.td}>{item.rating ?? "-"}</td>
+                <td className={[styles.td, styles.center].join(" ")}>{item.rating ?? "-"}</td>
                 <td className={styles.td}>
                     {item.untappdScore}
                     {item.untappdLink ? (
@@ -213,6 +213,66 @@ export default function ResultsClient({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile cards view */}
+        {currentUserItems && (
+        <div className={styles.cardsWrapper}>
+            {currentUserItems.map((item) => (
+            <div key={item.eventBeerId} className={styles.card}>
+                <div className={styles.cardHeader}>
+                #{item.eventBeerId} – {item.correctOptionName ?? "?"}
+                </div>
+
+                {!isOwner && (
+                <>
+                    <div className={styles.cardRow}>
+                    <span className={styles.label}>Gjett øl:</span>
+                    <span className={`${styles.value} ${item.correct ? styles.correct : styles.incorrect}`}>
+                        {item.guessedOptionName ?? "-"}
+                    </span>
+                    </div>
+
+                    <div className={styles.cardRow}>
+                    <span className={styles.label}>ABV:</span>
+                    <span className={styles.value}>{item.correctAbvName ?? "-"}</span>
+                    </div>
+                    <div className={styles.cardRow}>
+                    <span className={`${styles.label}`}>Gjett ABV:</span>
+                    <span className={`${styles.value} ${item.abvCorrect ? styles.correct : styles.incorrect}`}>
+                        {item.guessedAbvName ?? "-"}
+                    </span>
+                    </div>
+
+                    <div className={styles.cardRow}>
+                    <span className={styles.label}>Stil:</span>
+                    <span className={styles.value}>{item.correctTypeName ?? "-"}</span>
+                    </div>
+                    <div className={styles.cardRow}>
+                    <span className={`${styles.label}`}>Gjett stil:</span>
+                    <span className={`${styles.value} ${item.typeCorrect ? styles.correct : styles.incorrect}`}>
+                        {item.guessedTypeName ?? "-"}
+                    </span>
+                    </div>
+                </>
+                )}
+
+                <div className={styles.cardRow}>
+                <span className={styles.label}>Rating:</span>
+                <span className={styles.value}>{item.rating ?? "-"}</span>
+                </div>
+
+                <div className={styles.cardRow}>
+                <span className={styles.label}>Untappd:</span>
+                <span className={styles.value}>
+                    {item.untappdScore ? item.untappdScore.toPrecision(2) : ""}
+                    {item.untappdLink && <UntappdLink beerId={item.untappdLink} />}
+                </span>
+                </div>
+            </div>
+            ))}
+        </div>
+        )}
+
     </section>
   );
 }

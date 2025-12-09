@@ -53,18 +53,18 @@ export default function BestBeers({ eventId }: { eventId: number }) {
         <thead>
           <tr>
             <th className={styles.th}>Øl</th>
-            <th className={styles.th}>Nr</th>
-            <th className={styles.th}>Snitt</th>
-            <th className={styles.th}>Untappd</th>
+            <th className={[styles.th, styles.center].join(" ")}>Nr</th>
+            <th className={[styles.th, styles.center].join(" ")}>Snitt</th>
+            <th className={[styles.th, styles.center].join(" ")}>Untappd</th>
           </tr>
         </thead>
         <tbody>
           {beers.map((beer) => (
             <tr key={beer.beerName} className={styles.row}>
               <td className={styles.td}>{beer.beerName}</td>
-              <td className={styles.td}>{beer.beerOrder}</td>
-              <td className={styles.td}>{beer.average.toFixed(2)}</td>
-              <td className={styles.td}>
+              <td className={[styles.td, styles.center].join(" ")}>{beer.beerOrder}</td>
+              <td className={[styles.td, styles.center].join(" ")}>{beer.average.toFixed(2)}</td>
+              <td className={[styles.td, styles.center].join(" ")}>
                 {beer.untappdLink ? (
                     <UntappdLink beerId={beer.untappdLink} />
                 ) : (
