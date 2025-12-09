@@ -24,12 +24,10 @@ export default function Leaderboard({
       <table className={styles.table}>
         <thead>
           <tr>
-            <th className={styles.th}>Plass</th>
-            <th className={styles.th}>Deltaker</th>
-            <th className={[styles.th, styles.center].join(" ")}>Poeng</th>
-            <th className={[styles.th, styles.center].join(" ")}>Øl</th>
-            <th className={[styles.th, styles.center].join(" ")}>ABV</th>
-            <th className={[styles.th, styles.center].join(" ")}>Stil</th>
+            <th className={styles.th}>#</th>
+            <th className={styles.th}>Navn</th>
+            <th className={[styles.th, styles.center].join(" ")}>P</th>
+            <th className={[styles.th, styles.center].join(" ")}>Øl/ABV/Stil</th>
           </tr>
         </thead>
         <tbody>
@@ -43,9 +41,7 @@ export default function Leaderboard({
               <td className={styles.td}>{s.placement}</td>
               <td className={styles.td}>{s.userName}</td>
               <td className={[styles.td, styles.center].join(" ")}>{s.points}</td>
-              <td className={[styles.td, styles.center].join(" ")}>{s.beerPoints}</td>
-              <td className={[styles.td, styles.center].join(" ")}>{s.abvPoints}</td>
-              <td className={[styles.td, styles.center].join(" ")}>{s.typePoints}</td>
+              <td className={[styles.td, styles.center].join(" ")}>{s.beerPoints}/{s.abvPoints}/{s.typePoints}</td>
             </tr>
           ))}
         </tbody>
