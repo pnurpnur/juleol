@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { UntappdLink } from "@/components/UntappdLink";
 import Leaderboard from "./Leaderboard";
 import styles from "./ResultsClient.module.css";
 
@@ -202,30 +203,9 @@ export default function ResultsClient({
                 <td className={styles.td}>
                     {item.untappdScore}
                     {item.untappdLink ? (
-                    <a
-                        href={`https://untappd.com/beer/${item.untappdLink}`}
-                        onClick={(e) => {
-                        e.preventDefault();
-                        window.location.href = `untappd://beer/${item.untappdLink}`;
-                        setTimeout(() => {
-                            window.open(
-                            `https://untappd.com/beer/${item.untappdLink}`,
-                            "_blank"
-                            );
-                        }, 500);
-                        }}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.link}
-                    >
-                        <img
-                        src="/untappd.jpg"
-                        alt="Untappd"
-                        className={styles.untappdIcon}
-                        />
-                    </a>
+                        <UntappdLink beerId={item.untappdLink} />
                     ) : (
-                    "-"
+                        ""
                     )}
                 </td>
                 </tr>

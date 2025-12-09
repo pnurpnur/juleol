@@ -47,14 +47,3 @@ body {
 .incorrect {
   background: rgba(220, 38, 38, 0.08);
 }
-
-.link {
-  color: inherit;
-  text-decoration: none;
-}
-
-.untappdIcon {
-  height: 20px;
-  vertical-align: middle;
-  margin-left: 7px;
-}

@@ -1,4 +1,5 @@
 "use client";
+import { UntappdLink } from "@/components/UntappdLink";
 import { useEffect, useState } from "react";
 import styles from "./ResultsClient.module.css";
 
@@ -65,48 +66,9 @@ export default function BestBeers({ eventId }: { eventId: number }) {
               <td className={styles.td}>{beer.average.toFixed(2)}</td>
               <td className={styles.td}>
                 {beer.untappdLink ? (
-                <a
-                    href="#"
-                    onClick={(e) => {
-                        e.preventDefault();
-
-                        const appUrl = `untappd://beer/${beer.untappdLink}`;
-                        const webUrl = `https://untappd.com/beer/${beer.untappdLink}`;
-
-                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-                        const start = Date.now();
-
-                        if (!isMobile) {
-                        // PC → bare åpne web i ny fane
-                        window.open(webUrl, "_blank", "noopener,noreferrer");
-                        return;
-                        }
-
-                        // --- MOBILE ---
-                        // Prøv åpne app
-                        window.location.href = appUrl;
-
-                        // fallback til web *i ny fane* dersom app ikke eksisterer
-                        setTimeout(() => {
-                        const now = Date.now();
-
-                        // Hvis appen ikke åpnet (brukeren fortsatt i browser)
-                        if (now - start < 1500) {
-                            window.open(webUrl, "_blank", "noopener,noreferrer");
-                        }
-                        }, 700);
-                    }}
-                    className={styles.link}
-                >
-                    <img
-                    src="/untappd.jpg"
-                    alt="Untappd"
-                    className={styles.untappdIcon}
-                    />
-                </a>
+                    <UntappdLink beerId={beer.untappdLink} />
                 ) : (
-                " "
+                    "-"
                 )}
               </td>
             </tr>
