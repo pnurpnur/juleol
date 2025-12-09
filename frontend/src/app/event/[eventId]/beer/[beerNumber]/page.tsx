@@ -23,8 +23,9 @@ export default async function Page(props: { params: Promise<{ eventId: string; b
   }
   const event = await res.json();
   const isOpen = event[0].is_open ?? false;
+  const owner = event[0].owner_id;
 
-  if (!isOpen) redirect("/");
+  if (!isOpen && userId != owner) redirect("/");
 
   return (
     <BeerClientPage
