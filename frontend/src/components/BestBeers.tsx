@@ -66,19 +66,37 @@ export default function BestBeers({ eventId }: { eventId: number }) {
               <td className={styles.td}>
                 {beer.untappdLink ? (
                 <a
-                    href={`https://untappd.com/beer/${beer.untappdLink}`}
+                    href="#"
                     onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = `untappd://beer/${beer.untappdLink}`;
-                    setTimeout(() => {
-                        window.open(
-                        `https://untappd.com/beer/${beer.untappdLink}`,
-                        "_blank"
-                        );
-                    }, 500);
+                        e.preventDefault();
+
+                        const appUrl = `untappd://beer/${beer.untappdLink}`;
+                        const webUrl = `https://untappd.com/beer/${beer.untappdLink}`;
+
+                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                        const start = Date.now();
+
+                        if (!isMobile) {
+                        // PC → bare åpne web i ny fane
+                        window.open(webUrl, "_blank", "noopener,noreferrer");
+                        return;
+                        }
+
+                        // --- MOBILE ---
+                        // Prøv åpne app
+                        window.location.href = appUrl;
+
+                        // fallback til web *i ny fane* dersom app ikke eksisterer
+                        setTimeout(() => {
+                        const now = Date.now();
+
+                        // Hvis appen ikke åpnet (brukeren fortsatt i browser)
+                        if (now - start < 1500) {
+                            window.open(webUrl, "_blank", "noopener,noreferrer");
+                        }
+                        }, 700);
                     }}
-                    target="_blank"
-                    rel="noreferrer"
                     className={styles.link}
                 >
                     <img
