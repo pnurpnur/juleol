@@ -71,7 +71,7 @@ export default function EventSelector({ userId }: { userId?: number }) {
       )}
 
       {/* Start konkurranse — kun vises hvis event er åpen */}
-      {eventIsOpen || userIsOwner && (
+      {(eventIsOpen || userIsOwner) && (
         <button
           disabled={!selected}
           onClick={start}
