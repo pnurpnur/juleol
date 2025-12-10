@@ -3,72 +3,73 @@
 package main
 
 import (
-    "log"
-    "net/http"
+	"log"
+	"net/http"
 
-    "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 
-    "juleol/api"
+	"juleol/api"
 )
 
 func main() {
-    // Load env file
-    if err := godotenv.Load(".env.local"); err != nil {
-        log.Println("⚠️  .env.local ikke funnet – bruker systemvariabler")
-    } else {
-        log.Println("📄 Lastet .env.local")
-    }
+	// Load env file
+	if err := godotenv.Load(".env.local"); err != nil {
+		log.Println("⚠️  .env.local ikke funnet – bruker systemvariabler")
+	} else {
+		log.Println("📄 Lastet .env.local")
+	}
 
-    log.Println("🚀 Starter Juleøl-server (LOCAL MODE) ...")
+	log.Println("🚀 Starter Juleøl-server (LOCAL MODE) ...")
 
-    // Test DB
-    db, err := api.DB()
-    if err != nil {
-        log.Fatal("❌ Klarte ikke koble til database:", err)
-    }
-    defer db.Close()
+	// Test DB
+	db, err := api.DB()
+	if err != nil {
+		log.Fatal("❌ Klarte ikke koble til database:", err)
+	}
+	defer db.Close()
 
-    log.Println("🟢 Database connection OK")
+	log.Println("🟢 Database connection OK")
 
-    //
-    // ---------------- API ROUTES ----------------
-    //
+	//
+	// ---------------- API ROUTES ----------------
+	//
 
-    // GUESS
-    http.HandleFunc("/submit_guess", api.SubmitGuess)
-    http.HandleFunc("/get_guess", api.GetGuess)
+	// GUESS
+	http.HandleFunc("/submit_guess", api.SubmitGuess)
+	http.HandleFunc("/get_guess", api.GetGuess)
 
-    // RATING
-    http.HandleFunc("/submit_rating", api.SubmitRating)
-    http.HandleFunc("/get_rating", api.GetRating)
+	// RATING
+	http.HandleFunc("/submit_rating", api.SubmitRating)
+	http.HandleFunc("/get_rating", api.GetRating)
 
-    // EVENT DATA
-    http.HandleFunc("/events", api.ListEvents)
+	// EVENT DATA
+	http.HandleFunc("/events", api.ListEvents)
 	http.HandleFunc("/event", api.GetEvent)
 	http.HandleFunc("/update_event", api.UpdateEvent)
 	http.HandleFunc("/event_beers", api.EventBeers)
-    http.HandleFunc("/event_beer_options", api.EventBeerOptions)
-    http.HandleFunc("/event_abv_ranges", api.EventABVRanges)
-    http.HandleFunc("/types", api.BeerTypes)
+	http.HandleFunc("/event_beer_options", api.EventBeerOptions)
+	http.HandleFunc("/event_abv_ranges", api.EventABVRanges)
+	http.HandleFunc("/types", api.BeerTypes)
 	http.HandleFunc("/delete_event_beer", api.DeleteEventBeer)
+	http.HandleFunc("/event_stats", api.EventStats)
 
 	// RESULTS
 	http.HandleFunc("/user_results", api.GetUserResults)
 	http.HandleFunc("/results", api.Leaderboard)
 	http.HandleFunc("/best_beers", api.GetBestBeers)
 
-    // USERS
-    http.HandleFunc("/register_user", api.RegisterUser)
+	// USERS
+	http.HandleFunc("/register_user", api.RegisterUser)
 
-    // HEALTH CHECK
-    http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-        w.Write([]byte("ok"))
-    })
+	// HEALTH CHECK
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
 
-    //
-    // ---------------- START SERVER ----------------
-    //
+	//
+	// ---------------- START SERVER ----------------
+	//
 
-    log.Println("📡 API lytter på http://localhost:3001")
-    log.Fatal(http.ListenAndServe(":3001", nil))
+	log.Println("📡 API lytter på http://localhost:3001")
+	log.Fatal(http.ListenAndServe(":3001", nil))
 }
