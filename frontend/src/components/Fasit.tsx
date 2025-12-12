@@ -143,12 +143,12 @@ export default function Fasit({ eventId }: { eventId: number }) {
         <hr style={{ margin: "1rem 0" }} />
 
         <div className={styles.fasitRow}>
-          <span>Riktig navn:</span>
+          <span>Riktig øl:</span>
           {currentItem.stats.nameCorrect}
         </div>
 
         <div className={styles.fasitRow}>
-          <span>Riktig type:</span>
+          <span>Riktig stil:</span>
           {currentItem.stats.typeCorrect}
         </div>
 
