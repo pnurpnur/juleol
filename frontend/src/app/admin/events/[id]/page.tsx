@@ -161,6 +161,32 @@ export default function AdminEventPage() {
                 >
                     ➤ Administrer ABV-områder for eventet
                 </Link>
+
+                <Link
+                    href={`/event/${eventId}/fasit`}
+                    style={{
+                        padding: "0.6rem",
+                        background: "#eee",
+                        borderRadius: "6px",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                    }}
+                >
+                    ➤ Se fasit
+                </Link>
+
+                <Link
+                    href={`/admin/events/${eventId}/stats`}
+                    style={{
+                        padding: "0.6rem",
+                        background: "#eee",
+                        borderRadius: "6px",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                    }}
+                >
+                    ➤ Se hvor mange har svart
+                </Link>
             </div>
         </div>
     );
