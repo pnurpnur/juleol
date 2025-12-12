@@ -115,3 +115,29 @@ body {
     font-weight: bold;
   }
 }
+
+/* Fasit spesifikke styles */
+.fasitCards {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 700px) {
+  .fasitCards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.fasitCard {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.fasitRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+}
+
