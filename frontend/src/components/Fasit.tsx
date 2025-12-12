@@ -7,6 +7,9 @@ interface BeerStats {
   nameCorrect: number;
   typeCorrect: number;
   abvCorrect: number;
+  nameWinner?: string | null;
+  typeWinner?: string | null;
+  abvWinner?: string | null;
 }
 
 interface FasitItem {
@@ -26,6 +29,9 @@ interface FasitApiItem {
     name_correct: number;
     type_correct: number;
     abv_correct: number;
+    name_winner?: string | null;
+    type_winner?: string | null;
+    abv_winner?: string | null;
   };
 }
 
@@ -53,6 +59,9 @@ export default function Fasit({ eventId }: { eventId: number }) {
           nameCorrect: item.stats.name_correct,
           typeCorrect: item.stats.type_correct,
           abvCorrect: item.stats.abv_correct,
+          nameWinner: item.stats.name_winner || null,
+          typeWinner: item.stats.type_winner || null,
+          abvWinner: item.stats.abv_winner || null,
         },
       }));
 
@@ -68,7 +77,6 @@ export default function Fasit({ eventId }: { eventId: number }) {
     load();
   }, [eventId]);
 
-  // Funksjon for å bytte kort med looping
   const changeIndex = useCallback(
     (delta: number) => {
       if (!data.length) return;
@@ -76,12 +84,11 @@ export default function Fasit({ eventId }: { eventId: number }) {
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + delta + data.length) % data.length);
         setAnimating(false);
-      }, 200); // Match transition
+      }, 200);
     },
     [data.length]
   );
 
-  // Tastaturpiler
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") changeIndex(1);
@@ -102,14 +109,12 @@ export default function Fasit({ eventId }: { eventId: number }) {
 
   return (
     <section style={{ padding: "2rem", textAlign: "center" }}>
-      {/* Logo */}
       <img
         src="/logo.png"
         alt="Logo"
         style={{ width: "150px", marginBottom: "2rem" }}
       />
 
-      {/* Kortkarusell */}
       <div
         className={styles.fasitCard}
         style={{
@@ -121,8 +126,11 @@ export default function Fasit({ eventId }: { eventId: number }) {
           opacity: animating ? 0 : 1,
         }}
       >
-        <div className={styles.fasitRow}>
-          <strong>#{currentItem.beerId}</strong>
+        <div
+            className={styles.fasitRow}
+            style={{ justifyContent: "center", fontSize: "1.4rem", marginBottom: "1rem" }}
+        >
+            <strong>#{currentItem.beerId}</strong>
         </div>
 
         <div className={styles.fasitRow}>
@@ -131,7 +139,7 @@ export default function Fasit({ eventId }: { eventId: number }) {
         </div>
 
         <div className={styles.fasitRow}>
-          <span>Stil:</span>
+          <span>Type:</span>
           {currentItem.type}
         </div>
 
@@ -142,23 +150,44 @@ export default function Fasit({ eventId }: { eventId: number }) {
 
         <hr style={{ margin: "1rem 0" }} />
 
+        {/* ØL */}
         <div className={styles.fasitRow}>
-          <span>Riktig øl:</span>
+          <span>🍺 Riktig øl:</span>
           {currentItem.stats.nameCorrect}
         </div>
+        {currentItem.stats.nameCorrect === 1 && currentItem.stats.nameWinner && (
+            <div className={styles.winnerRow}>
+                🎯 <b>{currentItem.stats.nameWinner}</b> var eneste som traff riktig øl!
+            </div>
+        )}
 
+        <hr style={{ margin: "1rem 0" }} />
+
+        {/* STIL */}
         <div className={styles.fasitRow}>
-          <span>Riktig stil:</span>
+          <span>🏷️ Riktig type:</span>
           {currentItem.stats.typeCorrect}
         </div>
+        {currentItem.stats.typeCorrect === 1 && currentItem.stats.typeWinner && (
+            <div className={styles.winnerRow}>
+                🎯 <b>{currentItem.stats.typeWinner}</b> var eneste som traff riktig type!
+            </div>
+        )}
 
+        <hr style={{ margin: "1rem 0" }} />
+
+        {/* ABV */}
         <div className={styles.fasitRow}>
-          <span>Riktig ABV:</span>
+          <span>🌡️ Riktig ABV:</span>
           {currentItem.stats.abvCorrect}
         </div>
+        {currentItem.stats.abvCorrect === 1 && currentItem.stats.abvWinner && (
+            <div className={styles.winnerRow}>
+                🎯 <b>{currentItem.stats.abvWinner}</b> var eneste som traff riktig styrke!
+            </div>
+        )}
       </div>
 
-      {/* Navigasjonspiler */}
       <div
         style={{
           marginTop: "2rem",

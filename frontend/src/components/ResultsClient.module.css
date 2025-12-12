@@ -138,6 +138,15 @@ body {
 .fasitRow {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.3rem;
+  margin-top: 1rem;
 }
 
+.winnerRow {
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: #e7ffe7;
+  border-left: 4px solid #3bb33b;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
