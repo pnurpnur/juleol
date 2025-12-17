@@ -324,14 +324,14 @@ export default function EventSummary({ eventId }: { eventId: number }) {
           <hr style={{ margin: "1rem 0" }} />
 
           <div className={styles.fasitRow}>
-            <span>✅ Alle riktige:</span>
+            <span>✅ Alt riktig:</span>
             <p className={styles.fasitData}>
               {beer.summary.all_correct.map(n => n.split(" ")[0]).join(", ") || "👎"}
             </p>
           </div>
 
           <div className={styles.fasitRow}>
-            <span>❌ Alle feil:</span>
+            <span>❌ Alt feil:</span>
             <p className={styles.fasitData}>
               {beer.summary.all_wrong.map(n => n.split(" ")[0]).join(", ") || "👍"}
             </p>
