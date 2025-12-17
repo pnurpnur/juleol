@@ -236,7 +236,7 @@ export default function EventSummary({ eventId }: { eventId: number }) {
         style={{ width: "150px", marginBottom: "2rem" }}
       />
 
-      {isGlobalCard && analysis && (
+      {isGlobalCard && analysis && winner && owner && (
         <div className={styles.fasitCard} style={{ maxWidth: "500px", margin: "0 auto" }}>
           <div style={{ fontSize: "1.6rem", marginBottom: "1rem" }}>
             🏆 <strong>Oppsummering</strong>
