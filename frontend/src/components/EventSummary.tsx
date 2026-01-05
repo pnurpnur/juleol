@@ -3,6 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import styles from "./ResultsClient.module.css";
 
+/* =======================
+   TYPER
+======================= */
+
 type CorrectGuess = {
   name: boolean;
   type: boolean;
@@ -53,13 +57,11 @@ type EventSummaryResponse = {
   beers: BeerSummary[];
 };
 
-// --- ANALYSE-FUNKSJON ---
-function analyzeBeers(beers: BeerSummary[]) {
-  /* -------------------------
-     ØL-SPESIFIKKE FAKTA
-     (basert på summary)
-  -------------------------- */
+/* =======================
+   ANALYSE
+======================= */
 
+function analyzeBeers(beers: BeerSummary[]) {
   const perBeerFacts = beers.map(beer => {
     const total = beer.participants.length - 1;
 
@@ -92,15 +94,11 @@ function analyzeBeers(beers: BeerSummary[]) {
         wrong: oneOrAll(beer.summary.wrong_abv),
         namesCorrect: beer.summary.correct_abv,
         namesWrong: beer.summary.wrong_abv,
-      }
+      },
     };
   });
 
-  /* -------------------------
-     GLOBALE FAKTA
-  -------------------------- */
-
-  // Snitt-rating per deltaker
+  // Snitt per deltaker
   const ratingMap: Record<string, number[]> = {};
 
   beers.forEach(b =>
@@ -112,7 +110,7 @@ function analyzeBeers(beers: BeerSummary[]) {
 
   const averages = Object.entries(ratingMap).map(([name, ratings]) => ({
     name,
-    avg: ratings.reduce((a,b)=>a+b,0) / ratings.length
+    avg: ratings.reduce((a, b) => a + b, 0) / ratings.length,
   }));
 
   const highestAvg = Math.max(...averages.map(a => a.avg));
@@ -121,97 +119,178 @@ function analyzeBeers(beers: BeerSummary[]) {
   const highestRaters = averages.filter(a => a.avg === highestAvg);
   const lowestRaters = averages.filter(a => a.avg === lowestAvg);
 
-  // Mørk vs IPA
-  const darkStyles = ["Stout", "Barleywine", "Bock"];
-  const ipaStyles = ["IPA"];
-  const preference: Record<string, number> = {};
-
-  beers.forEach(beer =>
-    beer.participants.forEach(p => {
-      if (!preference[p.name]) preference[p.name] = 0;
-      if (darkStyles.includes(beer.correct.type)) preference[p.name] += p.rating;
-      if (ipaStyles.includes(beer.correct.type)) preference[p.name] -= p.rating;
-    })
-  );
-
-  const likesDarkMost = Object.entries(preference).sort((a,b)=>b[1]-a[1])[0];
-  const likesIPAMost = Object.entries(preference).sort((a,b)=>a[1]-b[1])[0];
-
-  // Mest uenig øl (std dev)
   const stdDev = (arr: number[]) => {
-    const mean = arr.reduce((a,b)=>a+b,0)/arr.length;
-    return Math.sqrt(arr.reduce((a,b)=>a+(b-mean)**2,0)/arr.length);
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+    return Math.sqrt(arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length);
   };
 
   const mostDisagreedBeer = beers
     .map(b => ({
       beerId: b.beer_id,
-      sd: stdDev(b.participants.map(p => p.rating))
+      sd: stdDev(b.participants.map(p => p.rating)),
     }))
-    .sort((a,b)=>b.sd - a.sd)[0];
+    .sort((a, b) => b.sd - a.sd)[0];
 
   return {
     perBeerFacts,
     global: {
       highestRaters,
       lowestRaters,
-      likesDarkMost,
-      likesIPAMost,
-      mostDisagreedBeer
-    }
+      mostDisagreedBeer,
+    },
   };
 }
 
+/* =======================
+   TEKSTBYGGER
+======================= */
+
+function buildBeerSummaryText({
+  beer,
+  rank,
+  facts,
+  analysis,
+}: {
+  beer: BeerSummary;
+  rank: number;
+  facts: ReturnType<typeof analyzeBeers>["perBeerFacts"][number] | null;
+  analysis: ReturnType<typeof analyzeBeers>;
+}) {
+  const lines: string[] = [];
+
+  lines.push(`Øl #${beer.beer_id} var ${beer.correct.name}.`);
+  lines.push(
+    `Den fikk en rating på ${beer.average_rating.toFixed(2)} og ble nr ${rank} i testen.`
+  );
+
+  if (analysis.global.mostDisagreedBeer.beerId === beer.beer_id) {
+    lines.push(`Dette var ølet deltakerne var mest uenige om.`);
+  }
+
+  if (!facts) return lines.join("\n");
+
+  // Elsket ølet (≥ 9)
+  const loved = beer.participants.filter(p => p.rating >= 9);
+  if (loved.length > 0) {
+    lines.push(
+      `Ølet ble elsket av ${loved
+        .map(p => p.name.split(" ")[0])
+        .join(", ")}.`
+    );
+  }
+
+  // Hatet ølet (≤ 3)
+  const hated = beer.participants.filter(p => p.rating <= 3);
+  if (hated.length > 0) {
+    lines.push(
+      `Ølet ble ikke likt av ${hated
+        .map(p => p.name.split(" ")[0])
+        .join(", ")}.`
+    );
+  }
+
+  if (beer.summary.all_correct.length > 0) {
+    lines.push(
+      `Alle tre gjettene var riktige for ${beer.summary.all_correct
+        .map(n => n.split(" ")[0])
+        .join(", ")}.`
+    );
+  }
+
+  if (beer.summary.all_wrong.length > 0) {
+    lines.push(
+      `Alt var feil for ${beer.summary.all_wrong
+        .map(n => n.split(" ")[0])
+        .join(", ")}.`
+    );
+  }
+
+  if (facts.beerGuess.wrong === "one") {
+    lines.push(
+      `${facts.beerGuess.namesWrong[0].split(" ")[0]} var alene om å bomme på ølet.`
+    );
+  }
+
+  if (facts.beerGuess.correct === "one") {
+    lines.push(
+      `${facts.beerGuess.namesCorrect[0].split(" ")[0]} var den eneste som traff ølet.`
+    );
+  }
+
+  if (facts.beerGuess.correct === "none") {
+    lines.push(`Ingen traff ølet.`);
+  }
+
+  return lines.join("\n");
+}
+
+/* =======================
+   KOMPONENT
+======================= */
+
 export default function EventSummary({ eventId }: { eventId: number }) {
+  /* ---- STATE ---- */
   const [data, setData] = useState<EventSummaryResponse | null>(null);
   const [owner, setOwner] = useState<string | null>(null);
   const [winner, setWinner] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [animating, setAnimating] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      const res = await fetch(`/api/event_summary?event_id=${eventId}`);
-      if (!res.ok) return;
-      setData(await res.json());
-
-      // Hent owner fra feed
-      const ownerRes = await fetch(`/api/events/${eventId}`);
-      if (ownerRes.ok) {
-        const ownerJson = await ownerRes.json();
-        setOwner(ownerJson.owner_name);
-      }
-
-      // Hent vinner
-      const winnerRes = await fetch(`/api/leaderboard?event_id=${eventId}`);
-      if (winnerRes.ok) {
-        const winnerJson = await winnerRes.json();
-        if (Array.isArray(winnerJson.standings) && winnerJson.standings.length > 0) {
-          setWinner(winnerJson.standings[0].userName);
-        }
-      }
-    }
-    load();
-  }, [eventId]);
-
+  /* ---- DATA ---- */
   const beers = data?.beers ?? [];
+  const totalSlides = beers.length + 1;
   const analysis = beers.length ? analyzeBeers(beers) : null;
 
   const isGlobalCard = index === 0;
   const beer = !isGlobalCard ? beers[index - 1] : null;
-  const totalSlides = beers.length + 1;
 
+  const rankedBeers = [...beers].sort(
+    (a, b) => b.average_rating - a.average_rating
+  );
+
+  const rank =
+    beer ? rankedBeers.findIndex(b => b.beer_id === beer.beer_id) + 1 : 0;
+
+  const facts =
+    beer && analysis
+      ? analysis.perBeerFacts.find(f => f.beerId === beer.beer_id) ?? null
+      : null;
+
+  const winningBeer = rankedBeers[0];
+
+  /* ---- CALLBACKS ---- */
   const changeIndex = useCallback(
     (delta: number) => {
       if (!totalSlides) return;
       setAnimating(true);
       setTimeout(() => {
-        setIndex((i) => (i + delta + totalSlides) % totalSlides);
+        setIndex(i => (i + delta + totalSlides) % totalSlides);
         setAnimating(false);
       }, 200);
     },
     [totalSlides]
   );
+
+  /* ---- EFFECTS ---- */
+  useEffect(() => {
+    async function load() {
+      const res = await fetch(`/api/event_summary?event_id=${eventId}`);
+      if (res.ok) setData(await res.json());
+
+      const ownerRes = await fetch(`/api/events/${eventId}`);
+      if (ownerRes.ok) {
+        const o = await ownerRes.json();
+        setOwner(o.owner_name);
+      }
+
+      const winnerRes = await fetch(`/api/leaderboard?event_id=${eventId}`);
+      if (winnerRes.ok) {
+        const w = await winnerRes.json();
+        if (w.standings?.length) setWinner(w.standings[0].userName);
+      }
+    }
+    load();
+  }, [eventId]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -222,253 +301,62 @@ export default function EventSummary({ eventId }: { eventId: number }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [changeIndex]);
 
-  if (!data) return <div>Laster oppsummering…</div>;
+  /* ---- EARLY RETURN (TRYGT) ---- */
+  if (!data || !analysis) {
+    return <div>Laster oppsummering…</div>;
+  }
 
-  const facts = beer ? analysis?.perBeerFacts.find(f => f.beerId === beer.beer_id) : null;
-  const winningBeer = beers.slice().sort((a,b)=>b.average_rating - a.average_rating)[0];
-
-  // --- RENDER ---
+  /* ---- RENDER ---- */
   return (
     <section style={{ padding: "2rem", textAlign: "center" }}>
-      <img
-        src="/logo.png"
-        alt="Logo"
-        style={{ width: "150px", marginBottom: "2rem" }}
-      />
+      <img src="/logo.png" alt="Logo" style={{ width: 150, marginBottom: "2rem" }} />
 
-      {isGlobalCard && analysis && winner && owner && (
-        <div className={styles.fasitCard} style={{ maxWidth: "500px", margin: "0 auto" }}>
-          <div style={{ fontSize: "1.6rem", marginBottom: "1rem" }}>
-            🏆 <strong>Oppsummering</strong>
-          </div>
-
-          {/* Vinnende øl */}
-          <div className={styles.fasitRow}>
-            <span>🍺 Beste øl:</span>
-            <b>
-              {winningBeer.correct.name}
-            </b>
-          </div>
-
-          {/* Vinner */}
-          <div className={styles.fasitRow}>
-            <span>🥇 Vinner:</span>
-            <b>{winner.split(" ")[0]}</b>
-          </div>
-          {/* Owner */}
-          <div className={styles.fasitRow}>
-            <span>👑 Arrangør:</span>
-            <b>{owner.split(" ")[0]}</b>
-          </div>
-
-          <hr style={{ margin: "1rem 0" }} />
-
-          {/* Fun facts */}
-          <div className={styles.fasitRow}>
-            <span>😄 Elsker øl:</span>
-            <b>
-              {analysis.global.highestRaters
-                .map(r => `${r.name.split(" ")[0]} (${r.avg.toFixed(2)})`)
-                .join(", ")}
-            </b>
-          </div>
-
-          <div className={styles.fasitRow}>
-            <span>😞 Liker ikke øl:</span>
-            <b>
-              {analysis.global.lowestRaters
-                .map(r => `${r.name.split(" ")[0]} (${r.avg.toFixed(2)})`)
-                .join(", ")}
-            </b>
-          </div>
-
+      {/* GLOBAL */}
+      {isGlobalCard && winner && owner && (
+        <div className={styles.fasitCard} style={{ maxWidth: 500, margin: "0 auto" }}>
+          <h2>🏆 Oppsummering</h2>
+          <p><b>Beste øl:</b> {winningBeer.correct.name}</p>
+          <p><b>Vinner:</b> {winner.split(" ")[0]}</p>
+          <p><b>Arrangør:</b> {owner.split(" ")[0]}</p>
+          <p><b>😍 Likte ølet:</b>
+            {analysis.global.highestRaters
+            .map(r => ` ${r.name.split(" ")[0]} (${r.avg.toFixed(2)})`)
+            .join(", ")}
+          </p>
+          <p><b>😞 Var litt kritisk:</b>
+            {analysis.global.lowestRaters
+            .map(r => ` ${r.name.split(" ")[0]} (${r.avg.toFixed(2)})`)
+            .join(", ")}
+          </p>
         </div>
       )}
 
-       {/* Ølkort */}
+      {/* ØLKORT */}
       {!isGlobalCard && beer && (
         <div
           className={styles.fasitCard}
           style={{
             margin: "0 auto",
-            maxWidth: "500px",
-            transition: "transform 0.2s ease, opacity 0.2s ease",
-            transform: animating ? "translateX(20px)" : "translateX(0)",
+            maxWidth: 500,
             opacity: animating ? 0 : 1,
+            transform: animating ? "translateX(20px)" : "translateX(0)",
+            transition: "all 0.2s ease",
           }}
         >
-          <div style={{ fontSize: "1.4rem", marginBottom: "1rem" }}>
-            <strong>#{beer.beer_id}</strong>
-          </div>
-
-          <div className={styles.fasitRow}>
-            <span>🍺 Øl:</span>
-            <b>{beer.correct.name}</b>
-          </div>
-
-          <div className={styles.fasitRow}>
-            <span>🏷️ Type:</span> {beer.correct.type}
-          </div>
-
-          <div className={styles.fasitRow}>
-            <span>🌡️ Styrke:</span> {beer.correct.abv}
-          </div>
-
-          <hr style={{ margin: "1rem 0" }} />
-
-          <div className={styles.fasitRow}>
-            <span>🍺 Gjennomsnittsrating:</span>{" "}
-            {beer.average_rating !== null ? beer.average_rating.toFixed(2) : "–"}
-          </div>
-
-          <hr style={{ margin: "1rem 0" }} />
-
-          <div className={styles.fasitRow}>
-            <span>✅ Alt riktig:</span>
-            <p className={styles.fasitData}>
-              {beer.summary.all_correct.map(n => n.split(" ")[0]).join(", ") || "👎"}
-            </p>
-          </div>
-
-          <div className={styles.fasitRow}>
-            <span>❌ Alt feil:</span>
-            <p className={styles.fasitData}>
-              {beer.summary.all_wrong.map(n => n.split(" ")[0]).join(", ") || "👍"}
-            </p>
-          </div>
-
-          {beer.summary.highest_rating.length > 0 && (
-            <div className={styles.fasitRow}>
-              <span>😄 Høyest rating:</span>
-              <p className={styles.fasitData}>
-                {beer.summary.highest_rating.map(r => r.name.split(" ")[0]).join(", ")} 
-                {" "}({beer.summary.highest_rating[0].rating})
-              </p>
-            </div>
-          )}
-
-          {beer.summary.lowest_rating.length > 0 && (
-            <div className={styles.fasitRow}>
-              <span>😞 Lavest rating:</span>
-              <p className={styles.fasitData}>
-                {beer.summary.lowest_rating.map(r => r.name.split(" ")[0]).join(", ")} 
-                {" "}({beer.summary.lowest_rating[0].rating})
-              </p>
-            </div>
-          )}
-
-          <hr style={{ margin: "1rem 0" }} />
-
-          {facts?.beerGuess.correct === "one" && (
-            <div className={styles.fasitRow}>
-              <span>🎯 Kun én traff ølet:</span>
-              <p className={styles.fasitData}>
-                {facts.beerGuess.namesCorrect.map(n => n.split(" ")[0]).join(", ")}
-              </p>
-            </div>
-          )}
-
-          {facts?.beerGuess.correct === "all" && (
-            <div className={styles.fasitRow}>
-              <span>✅ Alle traff ølet</span>
-            </div>
-          )}
-
-          {facts?.beerGuess.correct === "none" && (
-            <div className={styles.fasitRow}>
-              <span>❌ Ingen traff ølet</span>
-            </div>
-          )}
-
-          {facts?.beerGuess.wrong === "one" && (
-            <div className={styles.fasitRow}>
-              <span>🤡 Bommet på ølet:</span>
-              <p className={styles.fasitData}>
-                {facts.beerGuess.namesWrong.map(n => n.split(" ")[0]).join(", ")}
-              </p>
-            </div>
-          )}
-
-          {facts?.typeGuess.correct === "one" && (
-            <div className={styles.fasitRow}>
-              <span>🎯 Kun én traff typen:</span>
-              <p className={styles.fasitData}>
-                {facts.typeGuess.namesCorrect.map(n => n.split(" ")[0]).join(", ")}
-              </p>
-            </div>
-          )}
-
-          {facts?.typeGuess.correct === "none" && (
-            <div className={styles.fasitRow}>
-              <span>❌ Ingen traff typen</span>
-            </div>
-          )}
-
-          {facts?.typeGuess.wrong === "one" && (
-            <div className={styles.fasitRow}>
-              <span>🤡 Bommet på typen:</span>
-              <p className={styles.fasitData}>
-                {facts.typeGuess.namesWrong.map(n => n.split(" ")[0]).join(", ")}
-              </p>
-            </div>
-          )}
-
-          {facts?.abvGuess.correct === "one" && (
-            <div className={styles.fasitRow}>
-              <span>🌡️ Kun én traff styrken:</span>
-              <p className={styles.fasitData}>
-                {facts.abvGuess.namesCorrect.map(n => n.split(" ")[0]).join(", ")}
-              </p>
-            </div>
-          )}
-
-          {facts?.abvGuess.correct === "all" && (
-            <div className={styles.fasitRow}>
-              <span>✅ Alle traff styrken</span>
-            </div>
-          )}
-
-          {facts?.abvGuess.correct === "none" && (
-            <div className={styles.fasitRow}>
-              <span>❌ Ingen traff styrken</span>
-            </div>
-          )}
-
-          {facts?.abvGuess.wrong === "one" && (
-            <div className={styles.fasitRow}>
-              <span className={styles.fasitSpan}>🤡 Bommet på styrken:</span>
-              <p className={styles.fasitData}>
-                {facts.abvGuess.namesWrong.map(n => n.split(" ")[0]).join(", ")}
-              </p>
-            </div>
-          )}
-
-          {analysis.global.mostDisagreedBeer.beerId === beer.beer_id && (
-            <div className={styles.fasitRow}>
-              <span>🤯 Mest uenige om!</span>
-              Standardavvik: {analysis.global.mostDisagreedBeer.sd.toPrecision(2)}
-            </div>
-          )}
-
+          <p style={{ whiteSpace: "pre-line", textAlign: "left" }}>
+            {buildBeerSummaryText({ beer, rank, facts, analysis })}
+          </p>
         </div>
       )}
 
-      <div
-        style={{
-          marginTop: "2rem",
-          display: "flex",
-          justifyContent: "center",
-          gap: "2rem",
-          fontSize: "1.5rem",
-        }}
-      >
+      {/* NAV */}
+      <div style={{ marginTop: "2rem" }}>
         <button onClick={() => changeIndex(-1)}>◀</button>
-        <span>
+        <span style={{ margin: "0 1rem" }}>
           {index + 1} / {totalSlides}
         </span>
         <button onClick={() => changeIndex(1)}>▶</button>
       </div>
-
     </section>
   );
 }
