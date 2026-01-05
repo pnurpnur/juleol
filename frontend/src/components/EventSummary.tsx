@@ -232,6 +232,7 @@ export default function EventSummary({ eventId }: { eventId: number }) {
   /* ---- STATE ---- */
   const [data, setData] = useState<EventSummaryResponse | null>(null);
   const [owner, setOwner] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [winner, setWinner] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [animating, setAnimating] = useState(false);
@@ -281,6 +282,7 @@ export default function EventSummary({ eventId }: { eventId: number }) {
       if (ownerRes.ok) {
         const o = await ownerRes.json();
         setOwner(o.owner_name);
+        setName(o.name);
       }
 
       const winnerRes = await fetch(`/api/leaderboard?event_id=${eventId}`);
@@ -314,10 +316,10 @@ export default function EventSummary({ eventId }: { eventId: number }) {
       {/* GLOBAL */}
       {isGlobalCard && winner && owner && (
         <div className={styles.fasitCard} style={{ maxWidth: 500, margin: "0 auto" }}>
-          <h2>🏆 Oppsummering</h2>
-          <p><b>Beste øl:</b> {winningBeer.correct.name}</p>
-          <p><b>Vinner:</b> {winner.split(" ")[0]}</p>
-          <p><b>Arrangør:</b> {owner.split(" ")[0]}</p>
+          <h2>{name}</h2>
+          <p><b>🍺 Beste øl:</b> {winningBeer.correct.name}</p>
+          <p><b>🏆 Vinner:</b> {winner.split(" ")[0]}</p>
+          <p><b>🧠 Arrangør:</b> {owner.split(" ")[0]}</p>
           <p><b>😍 Likte ølet:</b>
             {analysis.global.highestRaters
             .map(r => ` ${r.name.split(" ")[0]} (${r.avg.toFixed(2)})`)
