@@ -3,6 +3,29 @@
 import { useEffect, useState, useCallback } from "react";
 import styles from "./ResultsClient.module.css";
 
+const iconStyle = (icon: string): React.CSSProperties => {
+  const map: Record<string, string> = {
+    "🏆": "#f5c542", // gull
+    "🥇": "#f5c542",
+    "🥈": "#c0c0c0",
+    "🥉": "#cd7f32",
+    "😍": "#4caf50", // grønn
+    "🎯": "#4caf50",
+    "🧠": "#4caf50",
+    "😖": "#f44336", // rød
+    "🤡": "#f44336",
+    "❌": "#f44336",
+    "🤔": "#ff9800", // oransje
+    "🙈": "#ff9800",
+  };
+
+  return {
+    color: map[icon] ?? "inherit",
+    fontSize: "1.2rem",
+    lineHeight: 1,
+  };
+};
+
 /* =======================
    TYPER
 ======================= */
@@ -145,6 +168,18 @@ function analyzeBeers(beers: BeerSummary[]) {
    TEKSTBYGGER
 ======================= */
 
+function formatNames(names: string[]) {
+  const firstNames = names.map(n => n.split(" ")[0]);
+
+  if (firstNames.length === 0) return "";
+  if (firstNames.length === 1) return firstNames[0];
+  if (firstNames.length === 2) {
+    return `${firstNames[0]} og ${firstNames[1]}`;
+  }
+
+  return `${firstNames.slice(0, -1).join(", ")} og ${firstNames.at(-1)}`;
+}
+
 function buildBeerSummaryText({
   beer,
   rank,
@@ -155,78 +190,87 @@ function buildBeerSummaryText({
   rank: number;
   facts: ReturnType<typeof analyzeBeers>["perBeerFacts"][number] | null;
   analysis: ReturnType<typeof analyzeBeers>;
-}) {
-  const lines: string[] = [];
+}): {
+  title: string;
+  body: { icon: string; text: string }[];
+} {
+  const body: { icon: string; text: string }[] = [];
 
-  lines.push(`Øl #${beer.beer_id} var ${beer.correct.name}.`);
-  lines.push(
-    `Den fikk en rating på ${beer.average_rating.toFixed(2)} og ble nr ${rank} i testen.`
-  );
+  const title = `Øl #${beer.beer_id}: ${beer.correct.name}`;
+
+  body.push({
+    icon: "🏆",
+    text: `Snittrating ${beer.average_rating.toFixed(2)} – plassering nr. ${rank}`,
+  });
 
   if (analysis.global.mostDisagreedBeer.beerId === beer.beer_id) {
-    lines.push(`Dette var ølet deltakerne var mest uenige om.`);
+    body.push({
+      icon: "🤔",
+      text: "Dette var ølet deltakerne var mest uenige om.",
+    });
   }
 
-  if (!facts) return lines.join("\n");
+  if (!facts) return { title, body };
 
-  // Elsket ølet (≥ 9)
+  // 😍 Elsket (≥ 9)
   const loved = beer.participants.filter(p => p.rating >= 9);
   if (loved.length > 0) {
-    lines.push(
-      `Ølet ble elsket av ${loved
-        .map(p => p.name.split(" ")[0])
-        .join(", ")}.`
-    );
+    body.push({
+      icon: "😍",
+      text: `Elsket av ${formatNames(loved.map(p => p.name))}`,
+    });
   }
 
-  // Hatet ølet (≤ 3)
+  // 😖 Hatet (≤ 3)
   const hated = beer.participants.filter(p => p.rating <= 3);
   if (hated.length > 0) {
-    lines.push(
-      `Ølet ble ikke likt av ${hated
-        .map(p => p.name.split(" ")[0])
-        .join(", ")}.`
-    );
+    body.push({
+      icon: "😖",
+      text: `Ikke likt av ${formatNames(hated.map(p => p.name))}`,
+    });
   }
 
   if (beer.summary.all_correct.length > 0) {
-    lines.push(
-      `Alle tre gjettene var riktige for ${beer.summary.all_correct
-        .map(n => n.split(" ")[0])
-        .join(", ")}.`
-    );
+    body.push({
+      icon: "🎯",
+      text: `Alt riktig for ${formatNames(beer.summary.all_correct)}`,
+    });
   }
 
   if (beer.summary.all_wrong.length > 0) {
-    lines.push(
-      `Alt var feil for ${beer.summary.all_wrong
-        .map(n => n.split(" ")[0])
-        .join(", ")}.`
-    );
-  }
-
-  if (facts.beerGuess.wrong === "one") {
-    lines.push(
-      `${facts.beerGuess.namesWrong[0].split(" ")[0]} var alene om å bomme på ølet.`
-    );
+    body.push({
+      icon: "🤡",
+      text: `Alt feil for ${formatNames(beer.summary.all_wrong)}`,
+    });
   }
 
   if (facts.beerGuess.correct === "one") {
-    lines.push(
-      `${facts.beerGuess.namesCorrect[0].split(" ")[0]} var den eneste som traff ølet.`
-    );
+    body.push({
+      icon: "🧠",
+      text: `${formatNames(facts.beerGuess.namesCorrect)} var den eneste som traff ølet`,
+    });
+  }
+
+  if (facts.beerGuess.wrong === "one") {
+    body.push({
+      icon: "🙈",
+      text: `${formatNames(facts.beerGuess.namesWrong)} var alene om å bomme`,
+    });
   }
 
   if (facts.beerGuess.correct === "none") {
-    lines.push(`Ingen traff ølet.`);
+    body.push({
+      icon: "❌",
+      text: "Ingen klarte å gjette ølet",
+    });
   }
 
-  return lines.join("\n");
+  return { title, body };
 }
 
-/* =======================
-   KOMPONENT
-======================= */
+// =======================
+// KOMPONENT
+// =======================
 
 export default function EventSummary({ eventId }: { eventId: number }) {
   /* ---- STATE ---- */
@@ -343,11 +387,61 @@ export default function EventSummary({ eventId }: { eventId: number }) {
             opacity: animating ? 0 : 1,
             transform: animating ? "translateX(20px)" : "translateX(0)",
             transition: "all 0.2s ease",
+            textAlign: "left",
           }}
         >
-          <p style={{ whiteSpace: "pre-line", textAlign: "left" }}>
-            {buildBeerSummaryText({ beer, rank, facts, analysis })}
-          </p>
+          {(() => {
+            const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "🍺";
+            const summary = buildBeerSummaryText({ beer, rank, facts, analysis });
+
+            return (
+              <>
+                {/* OVERSKRIFT */}
+                <h3
+                  style={{
+                    marginBottom: "1rem",
+                    fontSize: "1.3rem",
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <span>{medal}</span>
+                  <span>{summary.title}</span>
+                </h3>
+
+                {/* LINJER */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  {summary.body.map((row, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        gap: "0.75rem",
+                        alignItems: "flex-start",
+                        padding: "0.4rem 0",
+                        borderBottom:
+                          i < summary.body.length - 1
+                            ? "1px dashed rgba(255,255,255,0.15)"
+                            : "none",
+                      }}
+                    >
+                      <span
+                        style={{
+                          ...iconStyle(row.icon),
+                          transition: "transform 0.2s ease",
+                        }}
+                      >
+                        {row.icon}
+                      </span>
+                      <span>{row.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
