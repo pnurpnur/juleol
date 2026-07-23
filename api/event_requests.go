@@ -3,7 +3,7 @@ package api
 // Used by POST /create_event
 type CreateEventRequest struct {
     Name    string `json:"name"`
-    UserID  string `json:"user_id"` // owner of event
+    OwnerID int    `json:"owner_id"` // arrangør (host) for the event
 }
 
 // Used by POST /close_event

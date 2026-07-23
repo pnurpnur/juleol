@@ -1,4 +1,5 @@
 // app/api/events/[eventId]/route.ts
+import { callBackend } from "@/lib/authz";
 
 export async function GET(
     req: Request,
@@ -22,11 +23,8 @@ export async function POST(
 
     const body = await req.json();
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/update_event`;
-
-    const res = await fetch(apiUrl, {
+    const res = await callBackend("/update_event", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             event_id: Number(eventId),
             ...body

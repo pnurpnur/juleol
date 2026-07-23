@@ -1,3 +1,11 @@
 /frontend/.next
 /frontend/node_modules
 *.log
+
+# Local database backups (contain user PII — keep out of git)
+/db/backups/
+
+# Secrets — never commit real env files. Use .env.example as the template.
+.env
+.env.local
+.env.*.local

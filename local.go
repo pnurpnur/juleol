@@ -60,6 +60,12 @@ func main() {
 	http.HandleFunc("/results", api.Leaderboard)
 	http.HandleFunc("/best_beers", api.GetBestBeers)
 
+	// ADMIN CATALOGS
+	http.HandleFunc("/users", api.ListUsers)
+	http.HandleFunc("/beer_options", api.BeerOptions)
+	http.HandleFunc("/abv_ranges", api.ABVRanges)
+	http.HandleFunc("/beer_types", api.CreateBeerType)
+
 	// USERS
 	http.HandleFunc("/register_user", api.RegisterUser)
 

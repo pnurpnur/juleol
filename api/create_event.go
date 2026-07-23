@@ -11,9 +11,23 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // Only the super-admin may create events.
+    if !RequireAdmin(w, r) {
+        return
+    }
+
     var req CreateEventRequest
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
         http.Error(w, "Invalid JSON", 400)
+        return
+    }
+
+    if req.Name == "" {
+        http.Error(w, "Missing name", 400)
+        return
+    }
+    if req.OwnerID == 0 {
+        http.Error(w, "Missing owner_id (arrangør)", 400)
         return
     }
 
@@ -23,17 +37,19 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    _, err = db.Exec(`
+    res, err := db.Exec(`
         INSERT INTO events (name, owner_id, is_open)
         VALUES (?, ?, TRUE)
-    `, req.Name, req.UserID)
+    `, req.Name, req.OwnerID)
 
     if err != nil {
         http.Error(w, err.Error(), 500)
         return
     }
 
-    json.NewEncoder(w).Encode(map[string]string{
+    id, _ := res.LastInsertId()
+    json.NewEncoder(w).Encode(map[string]interface{}{
         "status": "created",
+        "id":     id,
     })
 }

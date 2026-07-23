@@ -65,6 +65,9 @@ func EventBeers(w http.ResponseWriter, r *http.Request) {
     // POST /api/events/:id/beers
     // -----------------------
     case "POST":
+        if !RequireHost(w, r, eventID) {
+            return
+        }
         var body struct {
             BeerOptionID int  `json:"beer_option_id"`
             ABVRangeID   *int `json:"abv_range_id"`
@@ -105,6 +108,9 @@ func EventBeers(w http.ResponseWriter, r *http.Request) {
     // PUT /api/events/:id/beers
     // -----------------------
     case "PUT":
+        if !RequireHost(w, r, eventID) {
+            return
+        }
         var body struct {
             BeerID 		 int  `json:"beer_id"`
 			BeerOptionID int  `json:"beer_option_id"`

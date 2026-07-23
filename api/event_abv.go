@@ -18,6 +18,29 @@ func EventABVRanges(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // POST: attach an existing ABV range to this event's pool.
+    if r.Method == "POST" {
+        if !RequireHost(w, r, eventID) {
+            return
+        }
+        var body struct {
+            ABVRangeID int `json:"abv_range_id"`
+        }
+        if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.ABVRangeID == 0 {
+            http.Error(w, "Missing abv_range_id", 400)
+            return
+        }
+        if _, err := db.Exec(
+            `INSERT IGNORE INTO event_abv_ranges (event_id, abv_range_id) VALUES (?, ?)`,
+            eventID, body.ABVRangeID,
+        ); err != nil {
+            http.Error(w, err.Error(), 500)
+            return
+        }
+        json.NewEncoder(w).Encode(map[string]string{"status": "attached"})
+        return
+    }
+
     rows, err := db.Query(`
         SELECT ar.id, ar.label
         FROM event_abv_ranges ear

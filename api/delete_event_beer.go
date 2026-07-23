@@ -31,6 +31,17 @@ func DeleteEventBeer(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // Look up which event this beer belongs to, then authorize the caller as
+    // that event's host (or admin). Protects other events' fasit from edits.
+    var eventID int
+    if err := db.QueryRow(`SELECT event_id FROM beers WHERE id = ?`, req.BeerID).Scan(&eventID); err != nil {
+        http.Error(w, "Beer not found", http.StatusNotFound)
+        return
+    }
+    if !RequireHost(w, r, eventID) {
+        return
+    }
+
     log.Printf("🔴 [DeleteEventBeer] Deleting beer %d \n", req.BeerID)
 
     result, err := db.Exec(

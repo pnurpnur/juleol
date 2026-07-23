@@ -1,4 +1,5 @@
-//go:build local
+//go:build testdb
+
 package main
 
 import (

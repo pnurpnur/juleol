@@ -13,6 +13,10 @@ export default function AdminEventPage() {
 
     const [name, setName] = useState("");
     const [isOpen, setIsOpen] = useState(true);
+    const [ownerId, setOwnerId] = useState<string>("");
+
+    const [users, setUsers] = useState<{ id: number; name: string; email: string }[]>([]);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<boolean>(false);
@@ -27,6 +31,7 @@ export default function AdminEventPage() {
                 const data = await res.json();
                 setName(data.name);
                 setIsOpen(data.is_open);
+                setOwnerId(String(data.owner_id ?? ""));
             } catch (err: any) {
                 setError(err.message);
             } finally {
@@ -34,6 +39,16 @@ export default function AdminEventPage() {
             }
         };
         load();
+
+        // Only the admin can list users; use it to detect admin + populate the
+        // arrangør selector.
+        fetch("/api/users")
+            .then((r) => (r.ok ? r.json() : Promise.reject()))
+            .then((u) => {
+                setUsers(u);
+                setIsAdmin(true);
+            })
+            .catch(() => setIsAdmin(false));
     }, [eventId]);
 
     const save = async () => {
@@ -42,17 +57,20 @@ export default function AdminEventPage() {
         setSuccess(false);
 
         try {
+            const payload: Record<string, unknown> = { name, is_open: isOpen };
+            // Only the admin may reassign the arrangør.
+            if (isAdmin && ownerId) {
+                payload.owner_id = Number(ownerId);
+            }
+
             const res = await fetch(`/api/events/${eventId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name,
-                    is_open: isOpen,
-                }),
+                body: JSON.stringify(payload),
             });
 
             if (!res.ok) {
-                throw new Error("Kunne ikke lagre");
+                throw new Error((await res.text()) || "Kunne ikke lagre");
             }
 
             setSuccess(true);
@@ -101,6 +119,25 @@ export default function AdminEventPage() {
                 </label>
             </div>
 
+            {/* ARRANGØR (admin only) */}
+            {isAdmin && (
+                <div style={{ marginBottom: "1rem" }}>
+                    <label style={{ display: "block", fontWeight: 600 }}>Arrangør (host):</label>
+                    <select
+                        value={ownerId}
+                        onChange={(e) => setOwnerId(e.target.value)}
+                        style={{ width: "100%", padding: "0.5rem", border: "1px solid #ccc", borderRadius: 6 }}
+                    >
+                        <option value="">Velg arrangør…</option>
+                        {users.map((u) => (
+                            <option key={u.id} value={u.id}>
+                                {u.name} ({u.email})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
             {/* SAVE BUTTON */}
             <button
                 onClick={save}
@@ -146,20 +183,7 @@ export default function AdminEventPage() {
                         fontWeight: 600,
                     }}
                 >
-                    ➤ Administrer øl i dette eventet
-                </Link>
-
-                <Link
-                    href={`/admin/events/${eventId}/abv`}
-                    style={{
-                        padding: "0.6rem",
-                        background: "#eee",
-                        borderRadius: "6px",
-                        textDecoration: "none",
-                        fontWeight: 600,
-                    }}
-                >
-                    ➤ Administrer ABV-områder for eventet
+                    ➤ Administrer øl, ABV og fasit i dette eventet
                 </Link>
 
                 <Link

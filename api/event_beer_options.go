@@ -18,6 +18,29 @@ func EventBeerOptions(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // POST: attach an existing catalog beer to this event's pool.
+    if r.Method == "POST" {
+        if !RequireHost(w, r, eventID) {
+            return
+        }
+        var body struct {
+            BeerOptionID int `json:"beer_option_id"`
+        }
+        if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.BeerOptionID == 0 {
+            http.Error(w, "Missing beer_option_id", 400)
+            return
+        }
+        if _, err := db.Exec(
+            `INSERT IGNORE INTO event_beer_options (event_id, beer_option_id) VALUES (?, ?)`,
+            eventID, body.BeerOptionID,
+        ); err != nil {
+            http.Error(w, err.Error(), 500)
+            return
+        }
+        json.NewEncoder(w).Encode(map[string]string{"status": "attached"})
+        return
+    }
+
     rows, err := db.Query(`
         SELECT bo.id, bo.name
         FROM event_beer_options ebo

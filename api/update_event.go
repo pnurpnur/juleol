@@ -10,6 +10,7 @@ type UpdateEventRequest struct {
     EventID int     `json:"event_id"`
     Name    *string `json:"name"`
     IsOpen  *bool   `json:"is_open"`
+    OwnerID *int    `json:"owner_id"`
 }
 
 func UpdateEvent(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +27,16 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 
     if req.EventID == 0 {
         http.Error(w, "Missing event_id", 400)
+        return
+    }
+
+    // Only the admin or the event's host may edit it.
+    if !RequireHost(w, r, req.EventID) {
+        return
+    }
+    // Reassigning the arrangør is an admin-only action.
+    if req.OwnerID != nil && !GetCaller(r).IsAdmin() {
+        http.Error(w, "Only admin can change arrangør", http.StatusForbidden)
         return
     }
 
@@ -53,6 +64,18 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
         q += "is_open = ?"
         args = append(args, *req.IsOpen)
         first = false
+    }
+
+    if req.OwnerID != nil {
+        if !first { q += ", " }
+        q += "owner_id = ?"
+        args = append(args, *req.OwnerID)
+        first = false
+    }
+
+    if first {
+        http.Error(w, "Nothing to update", 400)
+        return
     }
 
     q += " WHERE id = ?"

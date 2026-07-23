@@ -17,25 +17,19 @@ func CloseEvent(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    if req.EventID == 0 {
+        http.Error(w, "Missing event_id", 400)
+        return
+    }
+
+    // Only the admin or the event's host may close it.
+    if !RequireHost(w, r, req.EventID) {
+        return
+    }
+
     db, err := DB()
     if err != nil {
         http.Error(w, err.Error(), 500)
-        return
-    }
-
-    // Sjekk om bruker er owner
-    var owner string
-    err = db.QueryRow(
-        `SELECT owner_id FROM events WHERE id = ?`,
-        req.EventID,
-    ).Scan(&owner)
-    if err != nil {
-        http.Error(w, "Event not found", 404)
-        return
-    }
-
-    if owner != req.UserID {
-        http.Error(w, "Not authorized", 403)
         return
     }
 

@@ -108,8 +108,8 @@ export function submitRating(data: {
 // Admin
 ///////////////////////////////////////////////////////////////
 
-export function createEvent(name: string, userId: string) {
-  return apiPost("/api/create-event", { name, user_id: userId });
+export function createEvent(name: string, ownerId: number) {
+  return apiPost("/api/create-event", { name, owner_id: ownerId });
 }
 
 export function closeEvent(eventId: number, userId: string) {

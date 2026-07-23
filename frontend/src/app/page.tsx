@@ -2,6 +2,7 @@ import { auth, signOut } from "@/auth";
 import Link from "next/link";
 import EventSelector from "@/components/EventSelector";
 import LoginButton from "@/components/LoginButton";
+import { isAdminEmail } from "@/lib/authz";
 import styles from "./page.module.css";
 
 export default async function Home() {
@@ -9,6 +10,7 @@ export default async function Home() {
 
   const loggedIn = !!session;
   const userId = session?.user?.id; // Dette er intern autoincrement userId
+  const admin = isAdminEmail(session?.user?.email);
 
   console.log("Session userId:", userId); // Skal nå vise et tall
 
@@ -27,6 +29,15 @@ export default async function Home() {
       ) : (
         <div className={styles.middleSection}>
           <LoginButton />
+        </div>
+      )}
+
+      {/* Admin-lenke (kun super-admin) */}
+      {admin && (
+        <div style={{ textAlign: "center", margin: "1rem 0" }}>
+          <Link href="/admin/events" className={styles.button}>
+            Admin: events
+          </Link>
         </div>
       )}
 

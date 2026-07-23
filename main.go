@@ -1,3 +1,5 @@
+//go:build !local && !testdb
+
 package main
 
 import (
@@ -60,6 +62,12 @@ func main() {
 	http.HandleFunc("/user_results", api.GetUserResults)
 	http.HandleFunc("/results", api.Leaderboard)
 	http.HandleFunc("/best_beers", api.GetBestBeers)
+
+	// Admin catalogs (create beers / abv / types, list users)
+	http.HandleFunc("/users", api.ListUsers)
+	http.HandleFunc("/beer_options", api.BeerOptions)
+	http.HandleFunc("/abv_ranges", api.ABVRanges)
+	http.HandleFunc("/beer_types", api.CreateBeerType)
 
 	// Users
 	http.HandleFunc("/register_user", api.RegisterUser)
