@@ -71,7 +71,7 @@ ORDER BY (beer_points + abv_points + type_points) DESC
 	}
 	defer rows.Close()
 
-	var standings []standing
+	standings := []standing{}
 	for rows.Next() {
 		var s standing
 		var beerPts, abvPts, typePts, guesses int

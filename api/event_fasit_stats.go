@@ -94,7 +94,7 @@ func EventFasitStats(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var items []FasitItem
+	items := []FasitItem{}
 
 	for rows.Next() {
 		var item FasitItem

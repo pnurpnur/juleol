@@ -100,6 +100,7 @@ ORDER BY eb.id ASC
     }
     out.EventID = eventID
     out.UserID = userID
+    out.Items = []item{}
 
     for rows.Next() {
         var (

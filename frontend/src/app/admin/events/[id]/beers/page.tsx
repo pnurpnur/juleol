@@ -57,17 +57,20 @@ export default function EventBeers() {
   });
   const [error, setError] = useState<string | null>(null);
 
+  // Coerce any API response (which may be JSON `null` for an empty list) to an array.
+  const asArray = (d: any) => (Array.isArray(d) ? d : []);
+
   const refreshPools = useCallback(() => {
-    fetch(`/api/events/${eventId}/beer-options`).then((r) => r.json()).then(setOptions).catch(console.error);
-    fetch(`/api/events/${eventId}/abv-options`).then((r) => r.json()).then(setAbvs).catch(console.error);
-    fetch(`/api/types`).then((r) => r.json()).then(setTypes).catch(console.error);
-    fetch(`/api/beer-options`).then((r) => (r.ok ? r.json() : [])).then(setAllOptions).catch(console.error);
-    fetch(`/api/abv-ranges`).then((r) => (r.ok ? r.json() : [])).then(setAllAbvs).catch(console.error);
+    fetch(`/api/events/${eventId}/beer-options`).then((r) => r.json()).then((d) => setOptions(asArray(d))).catch(console.error);
+    fetch(`/api/events/${eventId}/abv-options`).then((r) => r.json()).then((d) => setAbvs(asArray(d))).catch(console.error);
+    fetch(`/api/types`).then((r) => r.json()).then((d) => setTypes(asArray(d))).catch(console.error);
+    fetch(`/api/beer-options`).then((r) => (r.ok ? r.json() : [])).then((d) => setAllOptions(asArray(d))).catch(console.error);
+    fetch(`/api/abv-ranges`).then((r) => (r.ok ? r.json() : [])).then((d) => setAllAbvs(asArray(d))).catch(console.error);
   }, [eventId]);
 
   const refreshBeers = useCallback(async () => {
     const res = await fetch(`/api/events/${eventId}/beers`);
-    setBeers(await res.json());
+    setBeers(asArray(await res.json()));
   }, [eventId]);
 
   useEffect(() => {

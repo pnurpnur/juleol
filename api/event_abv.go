@@ -59,7 +59,7 @@ func EventABVRanges(w http.ResponseWriter, r *http.Request) {
         Label string `json:"label"`
     }
 
-    var list []ABV
+    list := []ABV{}
 
     for rows.Next() {
         var x ABV

@@ -19,7 +19,7 @@ func BeerTypes(w http.ResponseWriter, r *http.Request) {
     }
     defer rows.Close()
 
-    var result []map[string]interface{}
+    result := []map[string]interface{}{}
 
     for rows.Next() {
         var id int

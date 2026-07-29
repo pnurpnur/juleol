@@ -34,7 +34,7 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 		Date      string `json:"created_at"`
 	}
 
-	var events []Event
+	events := []Event{}
 
 	for rows.Next() {
 		var ev Event

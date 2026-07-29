@@ -47,7 +47,7 @@ func EventBeers(w http.ResponseWriter, r *http.Request) {
         }
         defer rows.Close()
 
-        var list []EventBeer
+        list := []EventBeer{}
 
         for rows.Next() {
             var eb EventBeer

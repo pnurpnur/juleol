@@ -65,7 +65,7 @@ ORDER BY average_rating DESC
 	}
 	defer rows.Close()
 
-	var beers []BeerScore
+	beers := []BeerScore{}
 	for rows.Next() {
 		var b BeerScore
 		if err := rows.Scan(&b.BeerOrder, &b.BeerName, &b.UntappdLink, &b.Sum, &b.Ratings, &b.Average); err != nil {
