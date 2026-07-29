@@ -44,7 +44,7 @@ func GetBestBeers(w http.ResponseWriter, r *http.Request) {
 	q := `
 SELECT
   b.id AS beer_order,
-  bo.name AS beer_name,
+  CASE WHEN bo.brewery IS NOT NULL AND bo.brewery <> '' THEN CONCAT(bo.brewery, ' – ', bo.name) ELSE bo.name END AS beer_name,
   bo.untappd_link,
   SUM(r.rating) AS rating_sum,
   COUNT(r.beer_id) AS ratings,

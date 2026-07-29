@@ -42,11 +42,11 @@ func EventBeerOptions(w http.ResponseWriter, r *http.Request) {
     }
 
     rows, err := db.Query(`
-        SELECT bo.id, bo.name
+        SELECT bo.id, `+beerNameSQL+`
         FROM event_beer_options ebo
         JOIN beer_options bo ON ebo.beer_option_id = bo.id
         WHERE ebo.event_id = ?
-        ORDER BY bo.name
+        ORDER BY bo.brewery, bo.name
     `, eventID)
 
     if err != nil {

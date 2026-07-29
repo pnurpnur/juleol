@@ -15,20 +15,31 @@ CREATE TABLE IF NOT EXISTS events (
     FOREIGN KEY (owner_id) REFERENCES users(id)
 );
 
-CREATE TABLE beer_options (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(128) NOT NULL,
-    untappd_link VARCHAR(256) NULL
-);
-
-CREATE TABLE abv_ranges (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    label VARCHAR(32) NOT NULL
-);
-
 CREATE TABLE beer_types (
     id INT AUTO_INCREMENT PRIMARY KEY,
     label VARCHAR(64) NOT NULL
+);
+
+-- BEER CATALOG: a beer = brewery + name + type + abv.
+-- type points to beer_types (used as the fasit), abv is the real ABV which is
+-- auto-placed into the tasting's abv_range.
+CREATE TABLE beer_options (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    brewery VARCHAR(128) NULL,
+    name VARCHAR(128) NOT NULL,
+    beer_type_id INT NULL,
+    abv DECIMAL(4,2) NULL,
+    untappd_link VARCHAR(256) NULL,
+    FOREIGN KEY (beer_type_id) REFERENCES beer_types(id)
+);
+
+-- ABV intervals for a tasting. min_abv/max_abv give the numeric bounds used to
+-- auto-place a beer (by its abv) into the right interval.
+CREATE TABLE abv_ranges (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    label VARCHAR(32) NOT NULL,
+    min_abv DECIMAL(4,2) NULL,
+    max_abv DECIMAL(4,2) NULL
 );
 
 -- BEERS (Øl for et event)

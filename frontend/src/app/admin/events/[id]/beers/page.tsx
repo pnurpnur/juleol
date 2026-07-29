@@ -2,19 +2,24 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
-interface BeerForm {
-  beer_option_id: string | number;
-  abv_range_id: string | number;
-  beer_type_id: string | number;
-}
-
 interface Option {
   id: number;
   name: string;
 }
+interface CatalogBeer {
+  id: number;
+  brewery: string | null;
+  name: string;
+  display_name: string;
+  beer_type_id: number | null;
+  abv: number | null;
+  untappd_link: string | null;
+}
 interface Abv {
   id: number;
   label: string;
+  min_abv: number | null;
+  max_abv: number | null;
 }
 interface BeerType {
   id: number;
@@ -27,37 +32,37 @@ export default function EventBeers() {
 
   const [beers, setBeers] = useState<any[]>([]);
 
-  // Event pools (what is selectable as fasit for this event)
-  const [options, setOptions] = useState<Option[]>([]);
-  const [abvs, setAbvs] = useState<Abv[]>([]);
+  // Event pools
+  const [options, setOptions] = useState<Option[]>([]); // beers attached to this event
+  const [abvs, setAbvs] = useState<Abv[]>([]); // abv intervals for this event
   const [types, setTypes] = useState<BeerType[]>([]);
 
-  // Global catalogs (for attaching existing entries to the pool)
-  const [allOptions, setAllOptions] = useState<Option[]>([]);
+  // Global catalogs (for attaching existing)
+  const [allOptions, setAllOptions] = useState<CatalogBeer[]>([]);
   const [allAbvs, setAllAbvs] = useState<Abv[]>([]);
 
-  // Add-beer (fasit) form
+  // Add-beer-to-event (fasit): only pick the beer; type + abv are auto-derived
   const [beerOptionId, setBeerOptionId] = useState("");
-  const [abvRangeId, setAbvRangeId] = useState("");
-  const [beerTypeId, setBeerTypeId] = useState("");
 
-  // Pool-management inputs
-  const [newOptionName, setNewOptionName] = useState("");
-  const [newOptionUntappd, setNewOptionUntappd] = useState("");
+  // New beer (catalog) inputs
+  const [nBrewery, setNBrewery] = useState("");
+  const [nName, setNName] = useState("");
+  const [nType, setNType] = useState("");
+  const [nAbv, setNAbv] = useState("");
+  const [nUntappd, setNUntappd] = useState("");
   const [attachOptionId, setAttachOptionId] = useState("");
-  const [newAbvLabel, setNewAbvLabel] = useState("");
+
+  // ABV interval inputs
+  const [aLabel, setALabel] = useState("");
+  const [aMin, setAMin] = useState("");
+  const [aMax, setAMax] = useState("");
   const [attachAbvId, setAttachAbvId] = useState("");
+
+  // New type
   const [newTypeLabel, setNewTypeLabel] = useState("");
 
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState<BeerForm>({
-    beer_option_id: "",
-    abv_range_id: "",
-    beer_type_id: "",
-  });
   const [error, setError] = useState<string | null>(null);
 
-  // Coerce any API response (which may be JSON `null` for an empty list) to an array.
   const asArray = (d: any) => (Array.isArray(d) ? d : []);
 
   const refreshPools = useCallback(() => {
@@ -99,36 +104,49 @@ export default function EventBeers() {
     };
   }
 
-  // ---- Pool: beer options ----
-  const createOption = guard(async () => {
-    if (!newOptionName.trim()) throw new Error("Skriv inn ølnavn");
+  // ---- Catalog: create a beer (brewery, name, type, abv) and attach to event ----
+  const createBeer = guard(async () => {
+    if (!nName.trim()) throw new Error("Skriv inn ølnavn");
+    if (!nType) throw new Error("Velg type");
+    if (!nAbv.trim() || isNaN(Number(nAbv.replace(",", ".")))) throw new Error("Skriv inn ABV (tall)");
     await post(`/api/beer-options`, {
-      name: newOptionName.trim(),
-      untappd_link: newOptionUntappd.trim() || null,
+      brewery: nBrewery.trim() || null,
+      name: nName.trim(),
+      beer_type_id: Number(nType),
+      abv: Number(nAbv.replace(",", ".")),
+      untappd_link: nUntappd.trim() || null,
       event_id: eventId,
     });
-    setNewOptionName("");
-    setNewOptionUntappd("");
+    setNBrewery("");
+    setNName("");
+    setNType("");
+    setNAbv("");
+    setNUntappd("");
     refreshPools();
   });
 
-  const attachOption = guard(async () => {
+  const attachBeer = guard(async () => {
     if (!attachOptionId) throw new Error("Velg et øl");
     await post(`/api/events/${eventId}/beer-options`, { beer_option_id: Number(attachOptionId) });
     setAttachOptionId("");
     refreshPools();
   });
 
-  // ---- Pool: ABV ranges ----
+  // ---- ABV intervals ----
   const createAbv = guard(async () => {
-    if (!newAbvLabel.trim()) throw new Error("Skriv inn ABV-etikett");
-    await post(`/api/abv-ranges`, { label: newAbvLabel.trim(), event_id: eventId });
-    setNewAbvLabel("");
+    if (!aLabel.trim()) throw new Error("Skriv inn etikett");
+    const min = aMin.trim() === "" ? null : Number(aMin.replace(",", "."));
+    const max = aMax.trim() === "" ? null : Number(aMax.replace(",", "."));
+    if (min === null || max === null || isNaN(min) || isNaN(max)) throw new Error("Skriv inn min og maks (tall) for auto-plassering");
+    await post(`/api/abv-ranges`, { label: aLabel.trim(), min_abv: min, max_abv: max, event_id: eventId });
+    setALabel("");
+    setAMin("");
+    setAMax("");
     refreshPools();
   });
 
   const attachAbv = guard(async () => {
-    if (!attachAbvId) throw new Error("Velg et ABV-område");
+    if (!attachAbvId) throw new Error("Velg et intervall");
     await post(`/api/events/${eventId}/abv-options`, { abv_range_id: Number(attachAbvId) });
     setAttachAbvId("");
     refreshPools();
@@ -142,21 +160,29 @@ export default function EventBeers() {
     refreshPools();
   });
 
-  // ---- Beers (fasit) ----
-  const add = guard(async () => {
+  // ---- Fasit: add a beer to the event (type + abv-interval auto-derived) ----
+  const addBeer = guard(async () => {
     if (!beerOptionId) throw new Error("Velg et øl");
-    if (!abvRangeId) throw new Error("Velg ABV (fasit)");
-    if (!beerTypeId) throw new Error("Velg type (fasit)");
-    await post(`/api/events/${eventId}/beers`, {
-      beer_option_id: Number(beerOptionId),
-      abv_range_id: Number(abvRangeId),
-      beer_type_id: Number(beerTypeId),
-    });
+    await post(`/api/events/${eventId}/beers`, { beer_option_id: Number(beerOptionId) });
     setBeerOptionId("");
-    setAbvRangeId("");
-    setBeerTypeId("");
     refreshBeers();
   });
+
+  async function changeBeer(bid: number, optionId: string) {
+    if (!optionId) return;
+    setError(null);
+    try {
+      const res = await fetch(`/api/events/${eventId}/beers`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ beer_id: bid, beer_option_id: Number(optionId) }),
+      });
+      if (!res.ok) throw new Error((await res.text()) || "Kunne ikke endre");
+      refreshBeers();
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
 
   async function remove(bid: number) {
     setError(null);
@@ -173,124 +199,80 @@ export default function EventBeers() {
     }
   }
 
-  function startEdit(beer: any) {
-    setEditingId(beer.id);
-    setEditForm({
-      beer_option_id: beer.beer_option_id ?? "",
-      abv_range_id: beer.abv_range_id ?? "",
-      beer_type_id: beer.beer_type_id ?? "",
-    });
-  }
-
-  async function saveEdit(bid: number) {
-    setError(null);
-    try {
-      const res = await fetch(`/api/events/${eventId}/beers`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          beer_option_id: editForm.beer_option_id === "" ? null : Number(editForm.beer_option_id),
-          abv_range_id: editForm.abv_range_id === "" ? null : Number(editForm.abv_range_id),
-          beer_type_id: editForm.beer_type_id === "" ? null : Number(editForm.beer_type_id),
-          beer_id: bid,
-        }),
-      });
-      if (!res.ok) throw new Error((await res.text()) || "Kunne ikke lagre");
-      setEditingId(null);
-      refreshBeers();
-    } catch (e: any) {
-      setError(e.message);
-    }
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditForm({ beer_option_id: "", abv_range_id: "", beer_type_id: "" });
-  }
-
-  const box: React.CSSProperties = {
-    border: "1px solid #ddd",
-    borderRadius: 8,
-    padding: "1rem",
-    marginBottom: "1.25rem",
-  };
-
+  const box: React.CSSProperties = { border: "1px solid #ddd", borderRadius: 8, padding: "1rem", marginBottom: "1.25rem" };
   const optionsNotInPool = allOptions.filter((o) => !options.some((p) => p.id === o.id));
   const abvsNotInPool = allAbvs.filter((a) => !abvs.some((p) => p.id === a.id));
+  const typeName = (id: number | null) => types.find((t) => t.id === id)?.name ?? "?";
 
   return (
-    <div style={{ padding: "1.5rem", maxWidth: 760 }}>
+    <div style={{ padding: "1.5rem", maxWidth: 820 }}>
       <h1>Øl, ABV og fasit – event #{eventId}</h1>
-
-      {error && (
-        <p style={{ color: "red", whiteSpace: "pre-wrap" }}>{error}</p>
-      )}
+      {error && <p style={{ color: "red", whiteSpace: "pre-wrap" }}>{error}</p>}
 
       {/* ------- ØL-POOL ------- */}
       <section style={box}>
         <h2>Øl-pool for eventet</h2>
-        <p style={{ color: "#666" }}>
-          Dette er ølene deltakerne kan gjette blant. Lag nytt øl eller hent inn et som finnes fra før.
-        </p>
+        <p style={{ color: "#666" }}>Et øl = bryggeri, navn, type og ABV. ABV brukes til å plassere ølet automatisk i riktig intervall.</p>
         <ul>
-          {options.map((o) => (
-            <li key={o.id}>{o.name}</li>
-          ))}
+          {allOptions
+            .filter((o) => options.some((p) => p.id === o.id))
+            .map((o) => (
+              <li key={o.id}>
+                {o.display_name} — {typeName(o.beer_type_id)}
+                {o.abv != null ? `, ${o.abv}%` : " (mangler ABV)"}
+              </li>
+            ))}
         </ul>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", marginBottom: "0.75rem" }}>
-          <input
-            placeholder="Nytt ølnavn"
-            value={newOptionName}
-            onChange={(e) => setNewOptionName(e.target.value)}
-          />
-          <input
-            placeholder="Untappd-lenke (valgfritt)"
-            value={newOptionUntappd}
-            onChange={(e) => setNewOptionUntappd(e.target.value)}
-            style={{ minWidth: 220 }}
-          />
-          <button onClick={createOption}>Lag øl + legg i pool</button>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.75rem" }}>
+          <input placeholder="Bryggeri" value={nBrewery} onChange={(e) => setNBrewery(e.target.value)} />
+          <input placeholder="Ølnavn" value={nName} onChange={(e) => setNName(e.target.value)} />
+          <select value={nType} onChange={(e) => setNType(e.target.value)}>
+            <option value="">Velg type</option>
+            {types.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+          <input placeholder="ABV %, f.eks. 5.2" value={nAbv} onChange={(e) => setNAbv(e.target.value)} />
+          <input placeholder="Untappd-lenke (valgfritt)" value={nUntappd} onChange={(e) => setNUntappd(e.target.value)} style={{ gridColumn: "1 / span 2" }} />
         </div>
+        <button onClick={createBeer}>Lag øl + legg i pool</button>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", marginTop: "0.75rem" }}>
           <select value={attachOptionId} onChange={(e) => setAttachOptionId(e.target.value)}>
             <option value="">Hent inn eksisterende øl…</option>
             {optionsNotInPool.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-              </option>
+              <option key={o.id} value={o.id}>{o.display_name}</option>
             ))}
           </select>
-          <button onClick={attachOption}>Legg i pool</button>
+          <button onClick={attachBeer}>Legg i pool</button>
         </div>
       </section>
 
       {/* ------- ABV-POOL ------- */}
       <section style={box}>
-        <h2>ABV-pool for eventet</h2>
+        <h2>ABV-intervaller for eventet</h2>
         <ul>
           {abvs.map((a) => (
-            <li key={a.id}>{a.label}</li>
+            <li key={a.id}>
+              {a.label}
+              {a.min_abv != null && a.max_abv != null ? ` (${a.min_abv}–${a.max_abv}%)` : " ⚠️ mangler grenser"}
+            </li>
           ))}
         </ul>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", marginBottom: "0.75rem" }}>
-          <input
-            placeholder="Ny ABV-etikett, f.eks. 4,5–5,5%"
-            value={newAbvLabel}
-            onChange={(e) => setNewAbvLabel(e.target.value)}
-          />
-          <button onClick={createAbv}>Lag ABV + legg i pool</button>
+          <input placeholder="Etikett, f.eks. 5,0–7,9%" value={aLabel} onChange={(e) => setALabel(e.target.value)} />
+          <input placeholder="min %" value={aMin} onChange={(e) => setAMin(e.target.value)} style={{ width: 90 }} />
+          <input placeholder="maks %" value={aMax} onChange={(e) => setAMax(e.target.value)} style={{ width: 90 }} />
+          <button onClick={createAbv}>Lag intervall + legg i pool</button>
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
           <select value={attachAbvId} onChange={(e) => setAttachAbvId(e.target.value)}>
-            <option value="">Hent inn eksisterende ABV…</option>
+            <option value="">Hent inn eksisterende intervall…</option>
             {abvsNotInPool.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.label}
-              </option>
+              <option key={a.id} value={a.id}>{a.label}</option>
             ))}
           </select>
           <button onClick={attachAbv}>Legg i pool</button>
@@ -306,102 +288,47 @@ export default function EventBeers() {
           ))}
         </ul>
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-          <input
-            placeholder="Ny type, f.eks. IPA"
-            value={newTypeLabel}
-            onChange={(e) => setNewTypeLabel(e.target.value)}
-          />
+          <input placeholder="Ny type, f.eks. IPA" value={newTypeLabel} onChange={(e) => setNewTypeLabel(e.target.value)} />
           <button onClick={createType}>Lag type</button>
         </div>
       </section>
 
-      {/* ------- FASIT / ØL I EVENTET ------- */}
+      {/* ------- FASIT ------- */}
       <section style={box}>
-        <h2>Øl i eventet (med fasit)</h2>
+        <h2>Øl i eventet (fasit)</h2>
+        <p style={{ color: "#666" }}>Velg øl – type og ABV-intervall settes automatisk fra ølet.</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <select value={beerOptionId} onChange={(e) => setBeerOptionId(e.target.value)}>
             <option value="">Velg øl</option>
             {options.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-              </option>
+              <option key={o.id} value={o.id}>{o.name}</option>
             ))}
           </select>
-          <select value={abvRangeId} onChange={(e) => setAbvRangeId(e.target.value)}>
-            <option value="">Velg ABV</option>
-            {abvs.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.label}
-              </option>
-            ))}
-          </select>
-          <select value={beerTypeId} onChange={(e) => setBeerTypeId(e.target.value)}>
-            <option value="">Velg type</option>
-            {types.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-          <button onClick={add}>Legg til øl</button>
+          <button onClick={addBeer}>Legg til øl</button>
         </div>
 
-        <ul>
+        <ol>
           {beers.map((b) => {
-            const optName = options.find((o) => o.id === b.beer_option_id)?.name ?? `option ${b.beer_option_id}`;
             const abvLabel = abvs.find((a) => a.id === b.abv_range_id)?.label ?? String(b.abv_range_id);
-            const typeName = types.find((t) => t.id === b.beer_type_id)?.name ?? String(b.beer_type_id);
             return (
-              <li key={b.id} style={{ marginBottom: "0.35rem" }}>
-                {editingId === b.id ? (
-                  <>
-                    <select
-                      value={editForm.beer_option_id}
-                      onChange={(e) => setEditForm({ ...editForm, beer_option_id: e.target.value })}
-                    >
-                      <option value="">Velg øl</option>
-                      {options.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={editForm.abv_range_id}
-                      onChange={(e) => setEditForm({ ...editForm, abv_range_id: e.target.value })}
-                    >
-                      <option value="">Velg ABV</option>
-                      {abvs.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.label}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={editForm.beer_type_id}
-                      onChange={(e) => setEditForm({ ...editForm, beer_type_id: e.target.value })}
-                    >
-                      <option value="">Velg type</option>
-                      {types.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button onClick={() => saveEdit(b.id)}>Lagre</button>
-                    <button onClick={cancelEdit}>Avbryt</button>
-                  </>
-                ) : (
-                  <>
-                    #{b.id} — <strong>{optName}</strong> · {abvLabel} · {typeName}{" "}
-                    <button onClick={() => startEdit(b)}>Endre</button>
-                    <button onClick={() => remove(b.id)}>Slett</button>
-                  </>
-                )}
+              <li key={b.id} style={{ marginBottom: "0.4rem" }}>
+                <strong>{b.beer_name}</strong> — {typeName(b.beer_type_id)} · {abvLabel}
+                {b.abv != null ? ` (${b.abv}%)` : ""}{" "}
+                <select
+                  defaultValue=""
+                  onChange={(e) => changeBeer(b.id, e.target.value)}
+                  style={{ marginLeft: 8 }}
+                >
+                  <option value="">Bytt øl…</option>
+                  {options.map((o) => (
+                    <option key={o.id} value={o.id}>{o.name}</option>
+                  ))}
+                </select>
+                <button onClick={() => remove(b.id)} style={{ marginLeft: 6 }}>Slett</button>
               </li>
             );
           })}
-        </ul>
+        </ol>
       </section>
     </div>
   );

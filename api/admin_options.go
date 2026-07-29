@@ -5,6 +5,11 @@ import (
     "net/http"
 )
 
+// beerNameSQL composes a beer's display name "Brewery – Name" (falling back to
+// just the name). Requires the beer_options row aliased as `bo`.
+const beerNameSQL = `CASE WHEN bo.brewery IS NOT NULL AND bo.brewery <> '' ` +
+    `THEN CONCAT(bo.brewery, ' – ', bo.name) ELSE bo.name END`
+
 // ---------------------------------------------------------------------------
 // Users (for the admin to pick an arrangør)
 // ---------------------------------------------------------------------------
@@ -41,9 +46,13 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 // ---------------------------------------------------------------------------
 
 type beerOption struct {
-    ID          int     `json:"id"`
-    Name        string  `json:"name"`
-    UntappdLink *string `json:"untappd_link"`
+    ID          int      `json:"id"`
+    Brewery     *string  `json:"brewery"`
+    Name        string   `json:"name"`
+    DisplayName string   `json:"display_name"` // "Brewery – Name"
+    BeerTypeID  *int     `json:"beer_type_id"`
+    ABV         *float64 `json:"abv"`
+    UntappdLink *string  `json:"untappd_link"`
 }
 
 func BeerOptions(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +64,8 @@ func BeerOptions(w http.ResponseWriter, r *http.Request) {
 
     switch r.Method {
     case "GET":
-        rows, err := db.Query(`SELECT id, name, untappd_link FROM beer_options ORDER BY name`)
+        rows, err := db.Query(`SELECT bo.id, bo.brewery, bo.name, ` + beerNameSQL + `, bo.beer_type_id, bo.abv, bo.untappd_link
+            FROM beer_options bo ORDER BY bo.brewery, bo.name`)
         if err != nil {
             http.Error(w, err.Error(), 500)
             return
@@ -64,16 +74,19 @@ func BeerOptions(w http.ResponseWriter, r *http.Request) {
         out := []beerOption{}
         for rows.Next() {
             var o beerOption
-            rows.Scan(&o.ID, &o.Name, &o.UntappdLink)
+            rows.Scan(&o.ID, &o.Brewery, &o.Name, &o.DisplayName, &o.BeerTypeID, &o.ABV, &o.UntappdLink)
             out = append(out, o)
         }
         json.NewEncoder(w).Encode(out)
 
     case "POST":
         var body struct {
-            Name        string  `json:"name"`
-            UntappdLink *string `json:"untappd_link"`
-            EventID     *int    `json:"event_id"` // if set, also attach to this event's pool
+            Brewery     *string  `json:"brewery"`
+            Name        string   `json:"name"`
+            BeerTypeID  *int     `json:"beer_type_id"`
+            ABV         *float64 `json:"abv"`
+            UntappdLink *string  `json:"untappd_link"`
+            EventID     *int     `json:"event_id"` // if set, also attach to this event's pool
         }
         if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
             http.Error(w, "Invalid JSON", 400)
@@ -93,7 +106,10 @@ func BeerOptions(w http.ResponseWriter, r *http.Request) {
             return
         }
 
-        res, err := db.Exec(`INSERT INTO beer_options (name, untappd_link) VALUES (?, ?)`, body.Name, body.UntappdLink)
+        res, err := db.Exec(
+            `INSERT INTO beer_options (brewery, name, beer_type_id, abv, untappd_link) VALUES (?, ?, ?, ?, ?)`,
+            body.Brewery, body.Name, body.BeerTypeID, body.ABV, body.UntappdLink,
+        )
         if err != nil {
             http.Error(w, err.Error(), 500)
             return
@@ -131,28 +147,32 @@ func ABVRanges(w http.ResponseWriter, r *http.Request) {
 
     switch r.Method {
     case "GET":
-        rows, err := db.Query(`SELECT id, label FROM abv_ranges ORDER BY id`)
+        rows, err := db.Query(`SELECT id, label, min_abv, max_abv FROM abv_ranges ORDER BY min_abv, id`)
         if err != nil {
             http.Error(w, err.Error(), 500)
             return
         }
         defer rows.Close()
         type ABV struct {
-            ID    int    `json:"id"`
-            Label string `json:"label"`
+            ID     int      `json:"id"`
+            Label  string   `json:"label"`
+            MinABV *float64 `json:"min_abv"`
+            MaxABV *float64 `json:"max_abv"`
         }
         out := []ABV{}
         for rows.Next() {
             var a ABV
-            rows.Scan(&a.ID, &a.Label)
+            rows.Scan(&a.ID, &a.Label, &a.MinABV, &a.MaxABV)
             out = append(out, a)
         }
         json.NewEncoder(w).Encode(out)
 
     case "POST":
         var body struct {
-            Label   string `json:"label"`
-            EventID *int   `json:"event_id"`
+            Label   string   `json:"label"`
+            MinABV  *float64 `json:"min_abv"`
+            MaxABV  *float64 `json:"max_abv"`
+            EventID *int     `json:"event_id"`
         }
         if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
             http.Error(w, "Invalid JSON", 400)
@@ -170,7 +190,8 @@ func ABVRanges(w http.ResponseWriter, r *http.Request) {
             return
         }
 
-        res, err := db.Exec(`INSERT INTO abv_ranges (label) VALUES (?)`, body.Label)
+        res, err := db.Exec(`INSERT INTO abv_ranges (label, min_abv, max_abv) VALUES (?, ?, ?)`,
+            body.Label, body.MinABV, body.MaxABV)
         if err != nil {
             http.Error(w, err.Error(), 500)
             return

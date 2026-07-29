@@ -39,10 +39,10 @@ func GetUserResults(w http.ResponseWriter, r *http.Request) {
     q := `
 SELECT
   eb.id AS event_beer_id,
-  bo.name AS correct_option_name,
+  CASE WHEN bo.brewery IS NOT NULL AND bo.brewery <> '' THEN CONCAT(bo.brewery, ' – ', bo.name) ELSE bo.name END AS correct_option_name,
   abv.label AS correct_abv_name,
   bt.label AS correct_type_name,
-  bopt.name AS guessed_option_name,
+  CASE WHEN bopt.brewery IS NOT NULL AND bopt.brewery <> '' THEN CONCAT(bopt.brewery, ' – ', bopt.name) ELSE bopt.name END AS guessed_option_name,
   abvpt.label AS guessed_abv_range_name,
   btpt.label AS guessed_type_name,
   r.rating,

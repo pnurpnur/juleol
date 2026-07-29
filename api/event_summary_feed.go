@@ -82,13 +82,13 @@ func EventSummaryFeed(w http.ResponseWriter, r *http.Request) {
 SELECT
   eb.id,
 
-  bo.name,
+  CASE WHEN bo.brewery IS NOT NULL AND bo.brewery <> '' THEN CONCAT(bo.brewery, ' – ', bo.name) ELSE bo.name END,
   bt.label,
   abv.label,
 
   u.name,
 
-  bo2.name,
+  CASE WHEN bo2.brewery IS NOT NULL AND bo2.brewery <> '' THEN CONCAT(bo2.brewery, ' – ', bo2.name) ELSE bo2.name END,
   bt2.label,
   abv2.label,
 

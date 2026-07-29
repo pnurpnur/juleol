@@ -59,9 +59,9 @@ func EventFasitStats(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query(`
 		SELECT 
 			eb.id AS beer_id,
-			bo.name AS correct_name,
+			CASE WHEN bo.brewery IS NOT NULL AND bo.brewery <> '' THEN CONCAT(bo.brewery, ' – ', bo.name) ELSE bo.name END AS correct_name,
 			bt.label AS correct_type,
-			abv.label AS correct_abv,
+			CASE WHEN bo.abv IS NOT NULL THEN CONCAT(abv.label, ' (', FORMAT(bo.abv,1), '%)') ELSE abv.label END AS correct_abv,
 
 			COALESCE(SUM(CASE WHEN g.guessed_beer_option_id = eb.beer_option_id THEN 1 ELSE 0 END),0) AS name_correct,
 			COALESCE(SUM(CASE WHEN g.guessed_type_id = eb.beer_type_id THEN 1 ELSE 0 END),0) AS type_correct,
@@ -84,7 +84,7 @@ func EventFasitStats(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN users u ON u.id = g.user_id
 
 		WHERE eb.event_id = ?
-		GROUP BY eb.id, bo.name, bt.label, abv.label
+		GROUP BY eb.id, bo.brewery, bo.name, bo.abv, bt.label, abv.label
 		ORDER BY eb.id
 	`, eventID, eventID)
 	if err != nil {
