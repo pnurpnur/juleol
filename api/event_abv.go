@@ -42,11 +42,11 @@ func EventABVRanges(w http.ResponseWriter, r *http.Request) {
     }
 
     rows, err := db.Query(`
-        SELECT ar.id, ar.label
+        SELECT ar.id, ar.label, ar.min_abv, ar.max_abv
         FROM event_abv_ranges ear
         JOIN abv_ranges ar ON ear.abv_range_id = ar.id
         WHERE ear.event_id = ?
-        ORDER BY ar.id
+        ORDER BY ar.min_abv, ar.id
     `, eventID)
     if err != nil {
         http.Error(w, err.Error(), 500)
@@ -55,15 +55,17 @@ func EventABVRanges(w http.ResponseWriter, r *http.Request) {
     defer rows.Close()
 
     type ABV struct {
-        ID    int    `json:"id"`
-        Label string `json:"label"`
+        ID     int      `json:"id"`
+        Label  string   `json:"label"`
+        MinABV *float64 `json:"min_abv"`
+        MaxABV *float64 `json:"max_abv"`
     }
 
     list := []ABV{}
 
     for rows.Next() {
         var x ABV
-        rows.Scan(&x.ID, &x.Label)
+        rows.Scan(&x.ID, &x.Label, &x.MinABV, &x.MaxABV)
         list = append(list, x)
     }
 
