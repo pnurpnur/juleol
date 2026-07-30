@@ -13,3 +13,17 @@ export async function POST(req: Request) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+// PUT /api/beer-types — rename a type {id, label}
+export async function PUT(req: Request) {
+  const body = await req.json();
+  const res = await callBackend("/beer_types", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  return new Response(text, {
+    status: res.status,
+    headers: { "Content-Type": "application/json" },
+  });
+}

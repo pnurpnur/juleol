@@ -41,6 +41,36 @@ func EventBeerOptions(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // DELETE: remove a beer from this event's pool. Blocked if the beer is part
+    // of the event's fasit (must be removed from the fasit first).
+    if r.Method == "DELETE" {
+        if !RequireHost(w, r, eventID) {
+            return
+        }
+        var body struct {
+            BeerOptionID int `json:"beer_option_id"`
+        }
+        if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.BeerOptionID == 0 {
+            http.Error(w, "Missing beer_option_id", 400)
+            return
+        }
+        var inFasit int
+        db.QueryRow(`SELECT COUNT(*) FROM beers WHERE event_id = ? AND beer_option_id = ?`, eventID, body.BeerOptionID).Scan(&inFasit)
+        if inFasit > 0 {
+            http.Error(w, "Ølet er i fasiten – fjern det fra fasiten først", 400)
+            return
+        }
+        if _, err := db.Exec(
+            `DELETE FROM event_beer_options WHERE event_id = ? AND beer_option_id = ?`,
+            eventID, body.BeerOptionID,
+        ); err != nil {
+            http.Error(w, err.Error(), 500)
+            return
+        }
+        json.NewEncoder(w).Encode(map[string]string{"status": "removed"})
+        return
+    }
+
     rows, err := db.Query(`
         SELECT bo.id, `+beerNameSQL+`
         FROM event_beer_options ebo

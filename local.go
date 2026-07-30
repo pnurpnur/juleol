@@ -67,6 +67,7 @@ func main() {
 	http.HandleFunc("/beer_options", api.BeerOptions)
 	http.HandleFunc("/abv_ranges", api.ABVRanges)
 	http.HandleFunc("/beer_types", api.CreateBeerType)
+	http.HandleFunc("/breweries", api.Breweries)
 
 	// USERS
 	http.HandleFunc("/register_user", api.RegisterUser)

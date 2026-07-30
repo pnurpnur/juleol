@@ -20,16 +20,25 @@ CREATE TABLE beer_types (
     label VARCHAR(64) NOT NULL
 );
 
+-- BREWERIES: global, editable list (like beer_types), shown in a dropdown.
+CREATE TABLE breweries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(128) NOT NULL UNIQUE
+);
+
 -- BEER CATALOG: a beer = brewery + name + type + abv.
 -- type points to beer_types (used as the fasit), abv is the real ABV which is
--- auto-placed into the tasting's abv_range.
+-- auto-placed into the tasting's abv_range. brewery text is a denormalized copy
+-- of the chosen brewery's name (kept in sync) so name composition stays simple.
 CREATE TABLE beer_options (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    brewery_id INT NULL,
     brewery VARCHAR(128) NULL,
     name VARCHAR(128) NOT NULL,
     beer_type_id INT NULL,
     abv DECIMAL(4,2) NULL,
     untappd_link VARCHAR(256) NULL,
+    FOREIGN KEY (brewery_id) REFERENCES breweries(id),
     FOREIGN KEY (beer_type_id) REFERENCES beer_types(id)
 );
 

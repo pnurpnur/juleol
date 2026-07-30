@@ -31,7 +31,9 @@ export async function POST(
         })
     });
 
-    const data = await res.json();
-
-    return Response.json(data, { status: res.status });
+    // Backend returns JSON on success, plain text on error — pass through raw.
+    return new Response(await res.text(), {
+        status: res.status,
+        headers: { "Content-Type": "application/json" },
+    });
 }

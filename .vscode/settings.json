@@ -20,7 +20,7 @@
   "eslint.run": "onSave",
   "eslint.codeActionsOnSave.mode": "problems",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
 
   // --- Tailwind ---
