@@ -48,7 +48,8 @@ CREATE TABLE abv_ranges (
     id INT AUTO_INCREMENT PRIMARY KEY,
     label VARCHAR(32) NOT NULL,
     min_abv DECIMAL(4,2) NULL,
-    max_abv DECIMAL(4,2) NULL
+    max_abv DECIMAL(4,2) NULL,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE   -- attached to every new event
 );
 
 -- BEERS (Øl for et event)
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS beers (
     beer_option_id INT NOT NULL,
     abv_range_id INT NOT NULL,
     beer_type_id INT NOT NULL,
+    position INT NULL,               -- tasting order within the event
 
     FOREIGN KEY (event_id) REFERENCES events(id),
     FOREIGN KEY (beer_option_id) REFERENCES beer_options(id),

@@ -41,6 +41,36 @@ func EventABVRanges(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // DELETE: remove an ABV interval from this event's pool. Blocked if a fasit
+    // beer in this event is placed in that interval.
+    if r.Method == "DELETE" {
+        if !RequireHost(w, r, eventID) {
+            return
+        }
+        var body struct {
+            ABVRangeID int `json:"abv_range_id"`
+        }
+        if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.ABVRangeID == 0 {
+            http.Error(w, "Missing abv_range_id", 400)
+            return
+        }
+        var inFasit int
+        db.QueryRow(`SELECT COUNT(*) FROM beers WHERE event_id = ? AND abv_range_id = ?`, eventID, body.ABVRangeID).Scan(&inFasit)
+        if inFasit > 0 {
+            http.Error(w, "Intervallet brukes av et øl i fasiten – fjern det ølet først", 400)
+            return
+        }
+        if _, err := db.Exec(
+            `DELETE FROM event_abv_ranges WHERE event_id = ? AND abv_range_id = ?`,
+            eventID, body.ABVRangeID,
+        ); err != nil {
+            http.Error(w, err.Error(), 500)
+            return
+        }
+        json.NewEncoder(w).Encode(map[string]string{"status": "removed"})
+        return
+    }
+
     rows, err := db.Query(`
         SELECT ar.id, ar.label, ar.min_abv, ar.max_abv
         FROM event_abv_ranges ear

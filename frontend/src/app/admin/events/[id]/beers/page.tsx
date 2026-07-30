@@ -58,6 +58,7 @@ export default function EventBeers() {
 
   // Fasit add
   const [beerOptionId, setBeerOptionId] = useState("");
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   // New beer inputs
   const [nBreweryId, setNBreweryId] = useState("");
@@ -222,6 +223,21 @@ export default function EventBeers() {
     refreshPools();
   });
 
+  async function detachAbv(rangeId: number) {
+    setError(null);
+    try {
+      const res = await fetch(`/api/events/${eventId}/abv-options`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ abv_range_id: rangeId }),
+      });
+      if (!res.ok) throw new Error((await res.text()) || "Kunne ikke fjerne");
+      refreshPools();
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
   // ---- Breweries ----
   const createBrewery = guard(async () => {
     if (!newBreweryName.trim()) throw new Error("Skriv inn bryggerinavn");
@@ -261,19 +277,29 @@ export default function EventBeers() {
     refreshBeers();
   });
 
-  async function changeBeer(bid: number, optionId: string) {
-    if (!optionId) return;
+  // Reorder the fasit by dropping the dragged row onto index `target`.
+  async function dropOnto(target: number) {
+    if (dragIndex === null || dragIndex === target) {
+      setDragIndex(null);
+      return;
+    }
+    const arr = [...beers];
+    const [moved] = arr.splice(dragIndex, 1);
+    arr.splice(target, 0, moved);
+    setDragIndex(null);
+    setBeers(arr); // optimistic
     setError(null);
     try {
       const res = await fetch(`/api/events/${eventId}/beers`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ beer_id: bid, beer_option_id: Number(optionId) }),
+        body: JSON.stringify({ order: arr.map((b) => b.id) }),
       });
-      if (!res.ok) throw new Error((await res.text()) || "Kunne ikke endre");
+      if (!res.ok) throw new Error((await res.text()) || "Kunne ikke endre rekkefølge");
       refreshBeers();
     } catch (e: any) {
       setError(e.message);
+      refreshBeers();
     }
   }
 
@@ -298,6 +324,7 @@ export default function EventBeers() {
   const abvsNotInPool = allAbvs.filter((a) => !abvs.some((p) => p.id === a.id));
   const typeName = (id: number | null) => types.find((t) => t.id === id)?.name ?? "?";
   const inFasit = (optId: number) => beers.some((b) => b.beer_option_id === optId);
+  const abvInFasit = (rangeId: number) => beers.some((b) => b.abv_range_id === rangeId);
 
   const typeOptions = (
     <>
@@ -326,7 +353,7 @@ export default function EventBeers() {
         <h2>Svar-alternativer</h2>
         <p style={{ color: "#222" }}>Lag ny eller velg fra liste.</p>
 
-        <h3>Gjeldende alternativer</h3>
+        {poolBeers.length > 0 && <h3>Gjeldende alternativer:</h3>}
         <ul>
           {poolBeers.map((o) => (
             <li key={o.id} style={{ marginBottom: "0.3rem" }}>
@@ -364,9 +391,9 @@ export default function EventBeers() {
           <input placeholder="Ølnavn" value={nName} onChange={(e) => setNName(e.target.value)} />
           <select value={nType} onChange={(e) => setNType(e.target.value)}>{typeOptions}</select>
           <input placeholder="ABV %, f.eks. 5.2" value={nAbv} onChange={(e) => setNAbv(e.target.value)} />
-          <input placeholder="Untappd-lenke (valgfritt)" value={nUntappd} onChange={(e) => setNUntappd(e.target.value)} style={{ gridColumn: "1 / span 2" }} />
+          <input placeholder="Untappd-ID (valgfritt)" value={nUntappd} onChange={(e) => setNUntappd(e.target.value)} style={{ gridColumn: "1 / span 2" }} />
         </div>
-        <button onClick={createBeer}>Lag øl + legg i pool</button>
+        <button onClick={createBeer}>Lag øl + legg til</button>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", marginTop: "0.75rem" }}>
           <select value={attachOptionId} onChange={(e) => setAttachOptionId(e.target.value)}>
@@ -375,7 +402,7 @@ export default function EventBeers() {
               <option key={o.id} value={o.id}>{o.display_name}</option>
             ))}
           </select>
-          <button onClick={attachBeer}>Legg i pool</button>
+          <button onClick={attachBeer}>Legg til</button>
         </div>
       </section>
 
@@ -411,9 +438,15 @@ export default function EventBeers() {
         <h2>ABV-intervaller for eventet</h2>
         <ul>
           {abvs.map((a) => (
-            <li key={a.id}>
-              {a.label}
-              {a.min_abv != null && a.max_abv != null ? ` (${a.min_abv}–${a.max_abv}%)` : " ⚠️ mangler grenser"}
+            <li key={a.id} style={{ marginBottom: "0.25rem" }}>
+              {a.label}&nbsp;
+              <button
+                onClick={() => detachAbv(a.id)}
+                disabled={abvInFasit(a.id)}
+                title={abvInFasit(a.id) ? "Brukes av et øl i fasiten" : "Fjern fra eventet"}
+              >
+                Fjern
+              </button>
             </li>
           ))}
         </ul>
@@ -464,11 +497,11 @@ export default function EventBeers() {
       {/* ------- FASIT ------- */}
       <section style={box}>
         <h2>Øl i eventet (fasit)</h2>
-        <p style={{ color: "#666" }}>Velg øl – type og ABV-intervall settes automatisk fra ølet.</p>
+        <p style={{ color: "#222" }}>Velg øl og dra og slipp rekkefølge</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <select value={beerOptionId} onChange={(e) => setBeerOptionId(e.target.value)}>
             <option value="">Velg øl</option>
-            {options.map((o) => (
+            {options.filter((o) => !inFasit(o.id)).map((o) => (
               <option key={o.id} value={o.id}>{o.name}</option>
             ))}
           </select>
@@ -476,18 +509,29 @@ export default function EventBeers() {
         </div>
 
         <ol>
-          {beers.map((b) => {
+          {beers.map((b, i) => {
             const abvLabel = abvs.find((a) => a.id === b.abv_range_id)?.label ?? String(b.abv_range_id);
             return (
-              <li key={b.id} style={{ marginBottom: "0.4rem" }}>
+              <li
+                key={b.id}
+                draggable
+                onDragStart={() => setDragIndex(i)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => dropOnto(i)}
+                onDragEnd={() => setDragIndex(null)}
+                style={{
+                  marginBottom: "0.4rem",
+                  cursor: "grab",
+                  opacity: dragIndex === i ? 0.4 : 1,
+                  padding: "0.25rem 0.4rem",
+                  borderRadius: 4,
+                  background: dragIndex === i ? "#eef" : "transparent",
+                }}
+                title="Dra for å endre rekkefølge"
+              >
+                <span style={{ color: "#999", marginRight: 6 }}>⠿</span>
                 <strong>{b.beer_name}</strong> — {typeName(b.beer_type_id)} · {abvLabel}
                 {b.abv != null ? ` (${b.abv}%)` : ""}{" "}
-                <select defaultValue="" onChange={(e) => changeBeer(b.id, e.target.value)} style={{ marginLeft: 8 }}>
-                  <option value="">Bytt øl…</option>
-                  {options.map((o) => (
-                    <option key={o.id} value={o.id}>{o.name}</option>
-                  ))}
-                </select>
                 <button onClick={() => removeFasit(b.id)} style={{ marginLeft: 6 }}>Slett</button>
               </li>
             );

@@ -8,7 +8,8 @@ import styles from "./GuessForm.module.css";
 
 interface GuessFormProps {
   eventId: number;
-  beerId: number;
+  beerNumber: number; // 1-based tasting position (used for navigation)
+  beerId: number; // real beers.id (used for guess/rating APIs)
   beerOptions: { id: number; name: string }[];
   abvRanges: { id: number; label: string }[];
   types: { id: number; name: string }[];
@@ -20,6 +21,7 @@ interface GuessFormProps {
 
 export default function GuessForm({
   eventId,
+  beerNumber,
   beerId,
   beerOptions,
   abvRanges,
@@ -141,12 +143,12 @@ export default function GuessForm({
   };
 
   const nextBeer = () => {
-    const next = beerId < totalBeers ? beerId + 1 : 1;
+    const next = beerNumber < totalBeers ? beerNumber + 1 : 1;
     goToBeer(next);
   };
 
   const prevBeer = () => {
-    const prev = beerId > 1 ? beerId - 1 : totalBeers;
+    const prev = beerNumber > 1 ? beerNumber - 1 : totalBeers;
     goToBeer(prev);
   };
 
@@ -172,7 +174,7 @@ export default function GuessForm({
           <button
             key={num}
             onClick={() => goToBeer(num)}
-            className={`${styles.beerButton} ${num === beerId ? styles.active : ""}`}
+            className={`${styles.beerButton} ${num === beerNumber ? styles.active : ""}`}
             title={`Øl ${num}`}
           >
             {num}

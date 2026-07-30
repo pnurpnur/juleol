@@ -13,7 +13,8 @@ type EventBeer struct {
     BeerName     string   `json:"beer_name"` // composed "Brewery – Name"
     ABVRangeID   int      `json:"abv_range_id"`
     TypeID       int      `json:"beer_type_id"`
-    ABV          *float64 `json:"abv"` // the beer's real ABV (for display)
+    ABV          *float64 `json:"abv"`      // the beer's real ABV (for display)
+    Position     int      `json:"position"` // tasting order within the event
 }
 
 // deriveBeerFasit resolves a beer's fasit for an event: its type (from the beer
@@ -71,11 +72,11 @@ func EventBeers(w http.ResponseWriter, r *http.Request) {
     // -----------------------
     case "GET":
         rows, err := db.Query(`
-            SELECT b.id, b.beer_option_id, `+beerNameSQL+`, b.abv_range_id, b.beer_type_id, bo.abv
+            SELECT b.id, b.beer_option_id, `+beerNameSQL+`, b.abv_range_id, b.beer_type_id, bo.abv, COALESCE(b.position, b.id)
             FROM beers b
             JOIN beer_options bo ON bo.id = b.beer_option_id
             WHERE b.event_id = ?
-            ORDER BY b.id ASC
+            ORDER BY COALESCE(b.position, b.id), b.id
         `, eventID)
 
         if err != nil {
@@ -87,7 +88,7 @@ func EventBeers(w http.ResponseWriter, r *http.Request) {
         list := []EventBeer{}
         for rows.Next() {
             var eb EventBeer
-            if err := rows.Scan(&eb.ID, &eb.BeerOptionID, &eb.BeerName, &eb.ABVRangeID, &eb.TypeID, &eb.ABV); err != nil {
+            if err := rows.Scan(&eb.ID, &eb.BeerOptionID, &eb.BeerName, &eb.ABVRangeID, &eb.TypeID, &eb.ABV, &eb.Position); err != nil {
                 http.Error(w, err.Error(), 500)
                 return
             }
@@ -121,9 +122,9 @@ func EventBeers(w http.ResponseWriter, r *http.Request) {
         }
 
         if _, err := db.Exec(`
-            INSERT INTO beers (event_id, beer_option_id, abv_range_id, beer_type_id)
-            VALUES (?, ?, ?, ?)
-        `, eventID, body.BeerOptionID, abvRangeID, typeID); err != nil {
+            INSERT INTO beers (event_id, beer_option_id, abv_range_id, beer_type_id, position)
+            VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(position),0)+1 FROM beers b WHERE b.event_id = ?))
+        `, eventID, body.BeerOptionID, abvRangeID, typeID, eventID); err != nil {
             http.Error(w, err.Error(), 500)
             return
         }
@@ -163,6 +164,42 @@ func EventBeers(w http.ResponseWriter, r *http.Request) {
             return
         }
         json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
+
+    // -----------------------
+    // PATCH /api/events/:id/beers  — reorder the fasit (drag-and-drop)
+    // body: {"order": [beerId, beerId, ...]}
+    // -----------------------
+    case "PATCH":
+        if !RequireHost(w, r, eventID) {
+            return
+        }
+        var body struct {
+            Order []int `json:"order"`
+        }
+        if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+            http.Error(w, "Invalid JSON: "+err.Error(), 400)
+            return
+        }
+        tx, err := db.Begin()
+        if err != nil {
+            http.Error(w, err.Error(), 500)
+            return
+        }
+        for i, beerID := range body.Order {
+            if _, err := tx.Exec(
+                `UPDATE beers SET position = ? WHERE id = ? AND event_id = ?`,
+                i+1, beerID, eventID,
+            ); err != nil {
+                tx.Rollback()
+                http.Error(w, err.Error(), 500)
+                return
+            }
+        }
+        if err := tx.Commit(); err != nil {
+            http.Error(w, err.Error(), 500)
+            return
+        }
+        json.NewEncoder(w).Encode(map[string]string{"status": "reordered"})
 
     default:
         http.Error(w, "Method not allowed", 405)

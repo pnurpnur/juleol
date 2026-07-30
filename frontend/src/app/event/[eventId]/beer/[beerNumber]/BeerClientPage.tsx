@@ -3,7 +3,7 @@
 import { useEventWithBeers } from "@/lib/hooks/useEventWithBeers";
 import GuessForm from "@/components/GuessForm";
 
-export default function BeerClientPage({ eventId, beerId, userId }) {
+export default function BeerClientPage({ eventId, beerNumber, beerId, totalBeers, userId }) {
   const { beerOptions, abvRanges, types, guess, rating, loading, error } =
     useEventWithBeers(eventId, beerId, userId);
 
@@ -14,6 +14,7 @@ export default function BeerClientPage({ eventId, beerId, userId }) {
     <GuessForm
       key={beerId}
       eventId={eventId}
+      beerNumber={beerNumber}
       beerId={beerId}
       beerOptions={beerOptions}
       abvRanges={abvRanges}
@@ -21,7 +22,7 @@ export default function BeerClientPage({ eventId, beerId, userId }) {
       initialGuess={guess}
       initialRating={rating}
       userId={userId}
-      totalBeers={12}
+      totalBeers={totalBeers}
     />
   );
 }

@@ -48,6 +48,16 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
     }
 
     id, _ := res.LastInsertId()
+
+    // Attach the default ABV intervals so every event starts with the standard set.
+    if _, err := db.Exec(`
+        INSERT INTO event_abv_ranges (event_id, abv_range_id)
+        SELECT ?, id FROM abv_ranges WHERE is_default = TRUE
+    `, id); err != nil {
+        http.Error(w, err.Error(), 500)
+        return
+    }
+
     json.NewEncoder(w).Encode(map[string]interface{}{
         "status": "created",
         "id":     id,
