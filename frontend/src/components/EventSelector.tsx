@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import styles from "./EventSelector.module.css";
 
 export default function EventSelector({ userId }: { userId?: number }) {
@@ -91,6 +92,13 @@ export default function EventSelector({ userId }: { userId?: number }) {
             Se resultater
         </button>
         )}
+
+      {/* Admin-knapp for event-eiere */}
+      {userIsOwner && selected && (
+        <Link href={`/admin/events/${selected}`} className={styles.adminButton}>
+          Admin
+        </Link>
+      )}
     </div>
   );
 }
