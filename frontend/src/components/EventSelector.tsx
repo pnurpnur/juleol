@@ -93,6 +93,13 @@ export default function EventSelector({ userId }: { userId?: number }) {
         </button>
         )}
 
+      {/* Se fasit — kun vises hvis event er stengt */}
+      {!eventIsOpen && selected && (
+        <Link href={`/event/${selected}/fasit`} className={styles.fasitButton}>
+          Se fasit
+        </Link>
+      )}
+
       {/* Admin-knapp for event-eiere */}
       {userIsOwner && selected && (
         <Link href={`/admin/events/${selected}`} className={styles.adminButton}>
