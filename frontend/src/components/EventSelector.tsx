@@ -21,13 +21,24 @@ export default function EventSelector({ userId }: { userId?: number }) {
       const data = await res.json();
       setEvents(data);
 
-      // Hvis ett event → velg det automatisk
-      if (data.length >= 1) {
+      // Hent lagret valg fra localStorage
+      const savedSelection = localStorage.getItem("selectedEventId");
+      if (savedSelection && data.some((e: any) => String(e.id) === savedSelection)) {
+        setSelected(savedSelection);
+      } else if (data.length >= 1) {
+        // Hvis ikke lagret valg eller eventet finnes ikke, velg det første
         setSelected(String(data[0].id));
       }
     }
     loadEvents();
   }, [userId]); // ⚡ kjør på nytt når userId blir tilgjengelig
+
+  // Lagre valg når det endres
+  useEffect(() => {
+    if (selected) {
+      localStorage.setItem("selectedEventId", selected);
+    }
+  }, [selected]);
 
   if (!userId) return null;
 
