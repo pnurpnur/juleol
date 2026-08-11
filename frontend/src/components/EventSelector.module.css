@@ -25,14 +25,15 @@
 .startButton,
 .resultsButton {
   width: 100%;
-  padding: 0.9rem;
+  padding: 0.6rem;
   border-radius: 0.5rem;
   color: white;
   font-weight: 600;
   cursor: pointer;
   text-align: center;
-  margin-top: 0.8rem;
+  margin-top: 0.6rem;
   box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  font-size: 0.95rem;
 }
 
 .startButton {
