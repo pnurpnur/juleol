@@ -93,6 +93,16 @@ export default function EventSelector({ userId }: { userId?: number }) {
         </button>
       )}
 
+      {/* Se fasit — kun vises hvis event er stengt */}
+      {!eventIsOpen && selected && (
+        <button
+          onClick={showFasit}
+          className={styles.fasitButton}
+        >
+          Se fasit
+        </button>
+      )}
+
       {/* Se resultater — kun vises hvis event er stengt eller user = owner */}
       {(!eventIsOpen || userIsOwner) && (
         <button
@@ -103,16 +113,6 @@ export default function EventSelector({ userId }: { userId?: number }) {
             Se resultater
         </button>
         )}
-
-      {/* Se fasit — kun vises hvis event er stengt */}
-      {!eventIsOpen && selected && (
-        <button
-          onClick={showFasit}
-          className={styles.fasitButton}
-        >
-          Se fasit
-        </button>
-      )}
 
       {/* Admin-knapp for event-eiere */}
       {userIsOwner && selected && (

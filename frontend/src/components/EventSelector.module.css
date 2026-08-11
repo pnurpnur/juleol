@@ -34,7 +34,7 @@
   margin-top: 0.6rem;
   box-shadow: 0 3px 6px rgba(0,0,0,0.2);
   font-size: 0.95rem;
-  border: none;
+  border: 2px solid rgba(0,0,0,0.2);
 }
 
 .startButton {
@@ -64,7 +64,7 @@
   margin-top: 0.6rem;
   box-shadow: 0 3px 6px rgba(0,0,0,0.2);
   font-size: 0.95rem;
-  border: none;
+  border: 2px solid rgba(0,0,0,0.2);
   cursor: pointer;
 }
 
@@ -83,7 +83,7 @@
   margin-top: 0.6rem;
   box-shadow: 0 3px 6px rgba(0,0,0,0.2);
   font-size: 0.95rem;
-  border: none;
+  border: 2px solid rgba(0,0,0,0.2);
   cursor: pointer;
 }
 
