@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import styles from "./EventSelector.module.css";
 
 export default function EventSelector({ userId }: { userId?: number }) {
@@ -54,6 +53,18 @@ export default function EventSelector({ userId }: { userId?: number }) {
     }
   }
 
+  function showFasit() {
+    if (selected) {
+      router.push(`/event/${selected}/fasit`);
+    }
+  }
+
+  function goToAdmin() {
+    if (selected) {
+      router.push(`/admin/events/${selected}`);
+    }
+  }
+
   return (
     <div className={styles.container}>
       {/* Dropdown vises kun hvis det finnes mer enn ett event */}
@@ -95,16 +106,22 @@ export default function EventSelector({ userId }: { userId?: number }) {
 
       {/* Se fasit — kun vises hvis event er stengt */}
       {!eventIsOpen && selected && (
-        <Link href={`/event/${selected}/fasit`} className={styles.fasitButton}>
+        <button
+          onClick={showFasit}
+          className={styles.fasitButton}
+        >
           Se fasit
-        </Link>
+        </button>
       )}
 
       {/* Admin-knapp for event-eiere */}
       {userIsOwner && selected && (
-        <Link href={`/admin/events/${selected}`} className={styles.adminButton}>
+        <button
+          onClick={goToAdmin}
+          className={styles.adminButton}
+        >
           Admin
-        </Link>
+        </button>
       )}
     </div>
   );
