@@ -26,8 +26,8 @@ body {
 .button {
   width: 100%;
   max-width: 280px;
-  padding: 0.9rem 1rem;
-  margin-top: 1rem;
+  padding: 0.6rem;
+  margin-top: 0.6rem;
   border-radius: 0.5rem;
   text-align: center;
   color: white;
@@ -35,6 +35,9 @@ body {
   text-decoration: none;
   display: block;
   box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  font-size: 0.95rem;
+  border: 2px solid rgba(0,0,0,0.2);
+  cursor: pointer;
 }
 
 .loginButton {
