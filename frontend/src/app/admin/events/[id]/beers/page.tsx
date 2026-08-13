@@ -241,13 +241,13 @@ export default function EventBeers() {
   // ---- Breweries ----
   const createBrewery = guard(async () => {
     if (!newBreweryName.trim()) throw new Error("Skriv inn bryggerinavn");
-    await post(`/api/breweries`, { name: newBreweryName.trim() });
+    await post(`/api/breweries`, { name: newBreweryName.trim(), event_id: eventId });
     setNewBreweryName("");
     refreshPools();
   });
   const saveBrewery = guard(async () => {
     if (editingBreweryId == null || !editBreweryName.trim()) return;
-    await send(`/api/breweries`, "PUT", { id: editingBreweryId, name: editBreweryName.trim() });
+    await send(`/api/breweries`, "PUT", { id: editingBreweryId, name: editBreweryName.trim(), event_id: eventId });
     setEditingBreweryId(null);
     setEditBreweryName("");
     refreshPools();

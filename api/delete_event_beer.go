@@ -44,7 +44,25 @@ func DeleteEventBeer(w http.ResponseWriter, r *http.Request) {
 
     log.Printf("🔴 [DeleteEventBeer] Deleting beer %d \n", req.BeerID)
 
-    result, err := db.Exec(
+    tx, err := db.Begin()
+    if err != nil {
+        http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+    defer tx.Rollback()
+
+    // Participants may have already guessed/rated this beer; those rows
+    // reference beers.id with no ON DELETE CASCADE, so clear them first.
+    if _, err := tx.Exec("DELETE FROM guesses WHERE beer_id = ?", req.BeerID); err != nil {
+        http.Error(w, "Delete error: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+    if _, err := tx.Exec("DELETE FROM ratings WHERE beer_id = ?", req.BeerID); err != nil {
+        http.Error(w, "Delete error: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    result, err := tx.Exec(
         "DELETE FROM beers WHERE id = ?",
         req.BeerID,
     )
@@ -62,6 +80,11 @@ func DeleteEventBeer(w http.ResponseWriter, r *http.Request) {
 
     if rowsAffected == 0 {
         http.Error(w, "Beer not found", http.StatusNotFound)
+        return
+    }
+
+    if err := tx.Commit(); err != nil {
+        http.Error(w, "Delete error: "+err.Error(), http.StatusInternalServerError)
         return
     }
 

@@ -38,14 +38,19 @@ func Breweries(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(out)
 
     case "POST":
-        if !RequireAdmin(w, r) {
-            return
-        }
         var body struct {
-            Name string `json:"name"`
+            Name    string `json:"name"`
+            EventID *int   `json:"event_id"` // host context; else admin
         }
         if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Name == "" {
             http.Error(w, "Missing name", 400)
+            return
+        }
+        if body.EventID != nil {
+            if !RequireHost(w, r, *body.EventID) {
+                return
+            }
+        } else if !RequireAdmin(w, r) {
             return
         }
         res, err := db.Exec(`INSERT INTO breweries (name) VALUES (?)`, body.Name)
@@ -57,15 +62,20 @@ func Breweries(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(map[string]interface{}{"id": id, "name": body.Name})
 
     case "PUT":
-        if !RequireAdmin(w, r) {
-            return
-        }
         var body struct {
-            ID   int    `json:"id"`
-            Name string `json:"name"`
+            ID      int    `json:"id"`
+            Name    string `json:"name"`
+            EventID *int   `json:"event_id"` // host context; else admin
         }
         if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.ID == 0 || body.Name == "" {
             http.Error(w, "Missing id or name", 400)
+            return
+        }
+        if body.EventID != nil {
+            if !RequireHost(w, r, *body.EventID) {
+                return
+            }
+        } else if !RequireAdmin(w, r) {
             return
         }
         if _, err := db.Exec(`UPDATE breweries SET name = ? WHERE id = ?`, body.Name, body.ID); err != nil {
