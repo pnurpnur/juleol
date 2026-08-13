@@ -257,13 +257,13 @@ export default function EventBeers() {
   // ---- Types ----
   const createType = guard(async () => {
     if (!newTypeLabel.trim()) throw new Error("Skriv inn typenavn");
-    await post(`/api/beer-types`, { label: newTypeLabel.trim() });
+    await post(`/api/beer-types`, { label: newTypeLabel.trim(), event_id: eventId });
     setNewTypeLabel("");
     refreshPools();
   });
   const saveType = guard(async () => {
     if (editingTypeId == null || !editTypeName.trim()) return;
-    await send(`/api/beer-types`, "PUT", { id: editingTypeId, label: editTypeName.trim() });
+    await send(`/api/beer-types`, "PUT", { id: editingTypeId, label: editTypeName.trim(), event_id: eventId });
     setEditingTypeId(null);
     setEditTypeName("");
     refreshPools();

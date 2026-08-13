@@ -266,12 +266,10 @@ func CreateBeerType(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "POST or PUT required", 405)
         return
     }
-    if !RequireAdmin(w, r) {
-        return
-    }
     var body struct {
-        ID    int    `json:"id"`
-        Label string `json:"label"`
+        ID      int    `json:"id"`
+        Label   string `json:"label"`
+        EventID *int   `json:"event_id"` // host context; else admin
     }
     if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
         http.Error(w, "Invalid JSON", 400)
@@ -279,6 +277,13 @@ func CreateBeerType(w http.ResponseWriter, r *http.Request) {
     }
     if body.Label == "" {
         http.Error(w, "Missing label", 400)
+        return
+    }
+    if body.EventID != nil {
+        if !RequireHost(w, r, *body.EventID) {
+            return
+        }
+    } else if !RequireAdmin(w, r) {
         return
     }
     db, err := DB()
