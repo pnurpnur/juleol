@@ -17,7 +17,8 @@ export default async function FasitPage(props: { params: Promise<{ eventId: stri
   }
   const event = await eventRes.json();
   const isOwner = event.owner_id === userId;
-  if (!isOwner) {
+  const eventIsClosed = !event.is_open;
+  if (!isOwner && !eventIsClosed) {
     return <main><h1>Du er ikke eier av eventet</h1></main>;
   }
 
