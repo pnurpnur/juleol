@@ -110,22 +110,24 @@ export default function EventSelector({ userId }: { userId?: number }) {
         </button>
       )}
 
-      {/* Se fasit og oppsummering — kun vises hvis event er stengt */}
+      {/* Se fasit — kun vises hvis event er stengt */}
       {!eventIsOpen && selected && (
-        <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
-          <button
-            onClick={showFasit}
-            className={styles.fasitButton}
-          >
-            Se fasit
-          </button>
-          <button
-            onClick={showSummary}
-            className={styles.fasitButton}
-          >
-            Se oppsummering
-          </button>
-        </div>
+        <button
+          onClick={showFasit}
+          className={styles.fasitButton}
+        >
+          Se fasit
+        </button>
+      )}
+
+      {/* Se oppsummering — kun vises hvis event er stengt */}
+      {!eventIsOpen && selected && (
+        <button
+          onClick={showSummary}
+          className={styles.fasitButton}
+        >
+          Se oppsummering
+        </button>
       )}
 
       {/* Se resultater — kun vises hvis event er stengt eller user = owner */}
