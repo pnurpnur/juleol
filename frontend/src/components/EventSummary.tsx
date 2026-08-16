@@ -186,18 +186,20 @@ function buildBeerSummaryText({
   rank,
   facts,
   analysis,
+  beerNumber,
 }: {
   beer: BeerSummary;
   rank: number;
   facts: ReturnType<typeof analyzeBeers>["perBeerFacts"][number] | null;
   analysis: ReturnType<typeof analyzeBeers>;
+  beerNumber: number;
 }): {
   title: string;
   body: { icon: string; text: string }[];
 } {
   const body: { icon: string; text: string }[] = [];
 
-  const title = `Øl #${beer.beer_id}: ${beer.correct.name}`;
+  const title = `Øl #${beerNumber}: ${beer.correct.name}`;
 
   body.push({
     icon: "🏆",
@@ -399,7 +401,7 @@ export default function EventSummary({ eventId }: { eventId: number }) {
         >
           {(() => {
             const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "🍺";
-            const summary = buildBeerSummaryText({ beer, rank, facts, analysis });
+            const summary = buildBeerSummaryText({ beer, rank, facts, analysis, beerNumber: index });
 
             return (
               <>
