@@ -154,9 +154,9 @@ export default function ResultsClient({
             </tr>
             </thead>
             <tbody>
-            {currentUserItems?.map((item) => (
+            {currentUserItems?.map((item, index) => (
                 <tr key={item.eventBeerId} className={styles.row}>
-                <td className={styles.td}>{item.eventBeerId}</td>
+                <td className={styles.td}>{index + 1}</td>
                 <td className={styles.td}>{item.correctOptionName ?? "-"}</td>
                 {!isOwner && (
                     <>
@@ -217,10 +217,10 @@ export default function ResultsClient({
         {/* Mobile cards view */}
         {currentUserItems && (
         <div className={styles.cardsWrapper}>
-            {currentUserItems.map((item) => (
+            {currentUserItems.map((item, index) => (
             <div key={item.eventBeerId} className={styles.card}>
                 <div className={styles.cardHeader}>
-                #{item.eventBeerId} – {item.correctOptionName ?? "?"}
+                #{index + 1} – {item.correctOptionName ?? "?"}
                 </div>
 
                 {!isOwner && (
