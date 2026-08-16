@@ -70,6 +70,12 @@ export default function EventSelector({ userId }: { userId?: number }) {
     }
   }
 
+  function showSummary() {
+    if (selected) {
+      router.push(`/event/${selected}/summary`);
+    }
+  }
+
   function goToAdmin() {
     if (selected) {
       router.push(`/admin/events/${selected}`);
@@ -104,14 +110,22 @@ export default function EventSelector({ userId }: { userId?: number }) {
         </button>
       )}
 
-      {/* Se fasit — kun vises hvis event er stengt */}
+      {/* Se fasit og oppsummering — kun vises hvis event er stengt */}
       {!eventIsOpen && selected && (
-        <button
-          onClick={showFasit}
-          className={styles.fasitButton}
-        >
-          Se fasit
-        </button>
+        <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+          <button
+            onClick={showFasit}
+            className={styles.fasitButton}
+          >
+            Se fasit
+          </button>
+          <button
+            onClick={showSummary}
+            className={styles.fasitButton}
+          >
+            Se oppsummering
+          </button>
+        </div>
       )}
 
       {/* Se resultater — kun vises hvis event er stengt eller user = owner */}
