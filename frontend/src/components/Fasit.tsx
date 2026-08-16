@@ -130,7 +130,7 @@ export default function Fasit({ eventId }: { eventId: number }) {
             className={styles.fasitRow}
             style={{ justifyContent: "center", fontSize: "1.4rem", marginBottom: "1rem" }}
         >
-            <strong>#{currentItem.beerId}</strong>
+            <strong>#{currentIndex + 1}</strong>
         </div>
 
         <div className={styles.fasitRow}>
