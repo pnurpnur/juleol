@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./ResultsClient.module.css";
 
 const iconStyle = (icon: string): React.CSSProperties => {
@@ -273,6 +274,7 @@ function buildBeerSummaryText({
 // =======================
 
 export default function EventSummary({ eventId }: { eventId: number }) {
+  const router = useRouter();
   /* ---- STATE ---- */
   const [data, setData] = useState<EventSummaryResponse | null>(null);
   const [owner, setOwner] = useState<string | null>(null);
@@ -355,7 +357,12 @@ export default function EventSummary({ eventId }: { eventId: number }) {
   /* ---- RENDER ---- */
   return (
     <section style={{ padding: "2rem", textAlign: "center" }}>
-      <img src="/logo.png" alt="Logo" style={{ width: 150, marginBottom: "2rem" }} />
+      <img
+        src="/logo.png"
+        alt="Logo"
+        style={{ width: 150, marginBottom: "2rem", cursor: "pointer" }}
+        onClick={() => router.push("/")}
+      />
 
       {/* GLOBAL */}
       {isGlobalCard && winner && owner && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./ResultsClient.module.css";
 
 interface BeerStats {
@@ -40,6 +41,7 @@ interface FasitResponse {
 }
 
 export default function Fasit({ eventId }: { eventId: number }) {
+  const router = useRouter();
   const [data, setData] = useState<FasitItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -112,7 +114,8 @@ export default function Fasit({ eventId }: { eventId: number }) {
       <img
         src="/logo.png"
         alt="Logo"
-        style={{ width: "150px", marginBottom: "2rem" }}
+        style={{ width: "150px", marginBottom: "2rem", cursor: "pointer" }}
+        onClick={() => router.push("/")}
       />
 
       <div
